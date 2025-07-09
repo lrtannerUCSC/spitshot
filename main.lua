@@ -3,6 +3,7 @@ local Entity = require("entity")
 local Mouth = require("mouth")
 local Gumball = require("gumball")
 local Projectile = require("projectile")
+local Turret = require("turret")
 local EntityFactory = require("entityFactory")
 
 -- Game state
@@ -13,7 +14,7 @@ local gumball = nil
 local camera = {
     x = 0,
     y = 0,
-    scale = 1,
+    scale = 0.5,
     target = nil
 }
 
@@ -34,15 +35,26 @@ function love.load()
     -- Set random seed
     math.randomseed(os.time())
 
-    local mouth = Mouth:new(200, 200, 50)
+    local mouth = Mouth:new(20, 20, 5) -- ORIGIN MARKER LOL
     table.insert(entities, mouth)
-    local mouth1 = Mouth:new(500, 200, 50)
+    local mouth1 = Mouth:new(500, 200, 20)
     table.insert(entities, mouth1)
-    local mouth2 = Mouth:new(200, 500, 50)
+    local mouth2 = Mouth:new(200, 500, 20)
     table.insert(entities, mouth2)
 
-    gumball = Gumball:new(400, 400, 25, 200)
+
+    local turret1 = Turret:new(320, 320, 40, 50, 60, 0.25)
+    table.insert(entities, turret1)
+    local turret2 = Turret:new(320, 320, 40, 50, 60, 0.25, math.rad(180))
+    table.insert(entities, turret2)
+
+    local newProj = EntityFactory:createProjectile(150, 150, 0, 30, 50)
+    table.insert(entities, newProj)
+
+    gumball = Gumball:new(400, 400, 10, 200)
     table.insert(entities, gumball)
+
+    
     
     -- Initialize camera to gumball position
     camera.x = gumball.x
@@ -63,9 +75,12 @@ function love.update(dt)
     
     -- Update all entities
     for _, entity in ipairs(entities) do
-        entity:update(dt)
-        -- Optional: Deactivate if out of screen bounds
-        local margin = 150
+        if entity.type == "turret" then
+            entity:update(dt, entities)
+        else
+            entity:update(dt)
+        end
+        local margin = 500
         if entity.x > love.graphics.getWidth() + camera.x + margin or
            entity.y > love.graphics.getHeight() + camera.y + margin then
             entity.active = false
@@ -90,24 +105,30 @@ function love.update(dt)
         end
     end
 
-    -- Projectile spawning with proper timer
-    projectileTimer = projectileTimer + dt
-    if projectileTimer >= projectileInterval then
-        projectileTimer = 0  -- Reset timer
-        local projectile = EntityFactory:createRandomGridProjectile(
-            25,  -- radius
-            love.graphics.getWidth(), 
-            love.graphics.getHeight(), 
-            camera.x, 
-            camera.y
-        )
-        table.insert(entities, projectile)
-    end
+    -- -- Projectile spawning with proper timer
+    -- projectileTimer = projectileTimer + dt
+    -- if projectileTimer >= projectileInterval then
+    --     projectileTimer = 0  -- Reset timer
+    --     local projectile = EntityFactory:createRandomGridProjectile(
+    --         15,  -- radius
+    --         love.graphics.getWidth(), 
+    --         love.graphics.getHeight(), 
+    --         camera.x, 
+    --         camera.y
+    --     )
+    --     table.insert(entities, projectile)
+    -- end
 
-    local newMouth = EntityFactory:attemptProceduralMouthSpawn(camera.x, camera.y, entities)
+    -- local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth")
 
-    if newMouth then
-        table.insert(entities, newMouth)
+    -- if newMouth then
+    --     table.insert(entities, newMouth)
+    -- end
+
+    local newTurret = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "turret")
+
+    if newTurret then
+        table.insert(entities, newTurret)
     end
 end
 
@@ -146,6 +167,9 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    if key == "escape" then
+        love.event.quit()
+    end
     if key == "r" or "R" then
         local proj = EntityFactory:createRandomProjectile(25, love.graphics.getWidth(), love.graphics.getHeight(), camera.x, camera.y)
         table.insert(entities, proj)
@@ -172,5 +196,5 @@ function love.wheelmoved(x, y)
         camera.scale = camera.scale / 1.1
     end
     -- Limit zoom range
-    camera.scale = math.max(0.5, math.min(2, camera.scale))
+    camera.scale = math.max(0.1, math.min(2, camera.scale))
 end

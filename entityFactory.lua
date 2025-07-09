@@ -3,20 +3,80 @@ local Entity = require("entity")
 local Mouth = require("mouth")
 local Gumball = require("gumball")
 local Projectile = require("projectile")
+local Turret = require("turret")  -- Make sure to require your Turret class
+
 local EntityFactory = {}
 
--- Configuration for procedural Mouth spawning
-EntityFactory.MOUTH_SPAWN = {
-    RADIUS = 1000,           -- Area around camera to consider
-    MIN_DISTANCE = 400,     -- Minimum space between Mouths
-    GRID_SIZE = 500,        -- Exploration grid chunk size
-    MAX_ATTEMPTS = 5,      -- Max attempts to find valid position
-    SPAWN_COOLDOWN = 75    -- Pixels camera must move before next spawn
+-- Generalized spawn configuration
+EntityFactory.SPAWN_CONFIG = {
+    RADIUS = 1200,           -- Area around camera to consider
+    MIN_DISTANCE = 150,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 10,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 10      -- Pixels camera must move before next spawn
 }
 
 -- State tracking
 EntityFactory.exploredChunks = {}
 EntityFactory.lastSpawnPosition = {x = 0, y = 0}
+
+-- Entity creation functions
+function EntityFactory:createProjectile(x, y, direction, radius, speed)
+    return Projectile:new(x, y, direction, nil, nil, radius, speed)
+end
+
+function EntityFactory:createMouth(x, y, radius)
+    return Mouth:new(x, y, radius or 20)
+end
+
+function EntityFactory:createTurret(x, y, radius)
+    return Turret:new(x, y, radius or 30, 100, 45, 1)
+end
+
+-- Generalized procedural spawn function
+function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, spawnParams)
+    -- Check spawn cooldown
+    if self:distance(cameraX, cameraY, self.lastSpawnPosition.x, self.lastSpawnPosition.y) < self.SPAWN_CONFIG.SPAWN_COOLDOWN then
+        return nil
+    end
+
+    -- Mark current chunk as explored
+    local chunk = self:getCurrentChunk(cameraX, cameraY)
+    self.exploredChunks[chunk.x..","..chunk.y] = true
+
+    -- Try to find valid spawn position
+    for i = 1, self.SPAWN_CONFIG.MAX_ATTEMPTS do
+        local angle = math.random() * math.pi * 2
+        local distance = self.SPAWN_CONFIG.RADIUS * (0.8 + math.random() * 0.4)
+        local x = cameraX + math.cos(angle) * distance
+        local y = cameraY + math.sin(angle) * distance
+
+        if self:isPositionValid(x, y, existingEntities, entityType) then
+            self.lastSpawnPosition = {x = cameraX, y = cameraY}
+            
+            -- Create the appropriate entity type
+            if entityType == "mouth" then
+                return self:createMouth(x, y, spawnParams and spawnParams.radius)
+            elseif entityType == "turret" then
+                return self:createTurret(x, y, spawnParams and spawnParams.radius)
+            -- Add more entity types as needed
+            end
+        end
+    end
+    return nil
+end
+
+-- Updated position validation
+function EntityFactory:isPositionValid(x, y, entities, entityType)
+    for _, e in ipairs(entities) do
+        -- Check against all entities of the same type
+        if (e.type == entityType or e.name == entityType) and 
+           self:distance(x, y, e.x, e.y) < self.SPAWN_CONFIG.MIN_DISTANCE then
+            return false
+        end
+    end
+    return true
+end
 
 function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight, originX, originY)
 
@@ -35,7 +95,7 @@ function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight,
     local targetX = originX + math.random(-screenWidth/4, screenWidth/4)
     local targetY = originY + math.random(-screenHeight/4, screenHeight/4)
     
-    return Projectile:new(projX, projY, targetX, targetY, radius)
+    return Projectile:new(projX, projY, nil, targetX, targetY, radius)
 end
 
 function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHeight, originX, originY)
@@ -67,53 +127,16 @@ function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHei
         targetY = originY - screenHeight/2 - padding
     end
     
-    return Projectile:new(projX, projY, targetX, targetY, radius)
+    return Projectile:new(projX, projY, nil, targetX, targetY, radius)
 end
 
-function EntityFactory:createMouth(x, y, radius)
-    return Mouth:new(x, y, radius or 50)
-end
-
+-- Keep these helper functions
 function EntityFactory:getCurrentChunk(x, y)
-    local gs = self.MOUTH_SPAWN.GRID_SIZE
+    local gs = self.SPAWN_CONFIG.GRID_SIZE
     return {
         x = math.floor(x / gs),
         y = math.floor(y / gs)
     }
-end
-
-function EntityFactory:attemptProceduralMouthSpawn(cameraX, cameraY, existingEntities)
-    -- Check spawn cooldown
-    if self:distance(cameraX, cameraY, self.lastSpawnPosition.x, self.lastSpawnPosition.y) < self.MOUTH_SPAWN.SPAWN_COOLDOWN then
-        return nil
-    end
-
-    -- Mark current chunk as explored
-    local chunk = self:getCurrentChunk(cameraX, cameraY)
-    self.exploredChunks[chunk.x..","..chunk.y] = true
-
-    -- Try to find valid spawn position
-    for i = 1, self.MOUTH_SPAWN.MAX_ATTEMPTS do
-        local angle = math.random() * math.pi * 2
-        local distance = self.MOUTH_SPAWN.RADIUS * (0.8 + math.random() * 0.4)
-        local x = cameraX + math.cos(angle) * distance
-        local y = cameraY + math.sin(angle) * distance
-
-        if self:isPositionValid(x, y, existingEntities) then
-            self.lastSpawnPosition = {x = cameraX, y = cameraY}
-            return self:createMouth(x, y)
-        end
-    end
-    return nil
-end
-
-function EntityFactory:isPositionValid(x, y, entities)
-    for _, e in ipairs(entities) do
-        if e.name == "mouth" and self:distance(x, y, e.x, e.y) < self.MOUTH_SPAWN.MIN_DISTANCE then
-            return false
-        end
-    end
-    return true
 end
 
 function EntityFactory:distance(x1, y1, x2, y2)
