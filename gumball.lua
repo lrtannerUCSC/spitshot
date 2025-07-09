@@ -79,6 +79,9 @@ function Gumball:onCollision(other)
         self.flag = false
         self.currentMouth = other.id
     end
+    if other.type == "projectile" then
+        self.color = {1, 0, 0}
+    end
 end
 
 
