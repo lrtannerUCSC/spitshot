@@ -8,12 +8,20 @@ local Turret = require("turret")  -- Make sure to require your Turret class
 local EntityFactory = {}
 
 -- Generalized spawn configuration
-EntityFactory.SPAWN_CONFIG = {
+EntityFactory.SPAWN_CONFIG_MOUTH = {
     RADIUS = 1200,           -- Area around camera to consider
     MIN_DISTANCE = 150,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 10,       -- Max attempts to find valid position
     SPAWN_COOLDOWN = 10      -- Pixels camera must move before next spawn
+}
+
+EntityFactory.SPAWN_CONFIG_TURRET = {
+    RADIUS = 1200,           -- Area around camera to consider
+    MIN_DISTANCE = 450,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 50      -- Pixels camera must move before next spawn
 }
 
 -- State tracking
@@ -33,32 +41,72 @@ function EntityFactory:createTurret(x, y, radius)
     return Turret:new(x, y, radius or 30, 100, 45, 1)
 end
 
+function EntityFactory:createTwinTurrets(x, y, radius)
+    local turret1 = Turret:new(
+        x, y,  -- Position
+        x, y,  -- Rotation origin (same as position)
+        radius or 30,
+        100,   -- speed
+        45,    -- rotation speed (degrees/sec)
+        1,     -- fire rate
+        0      -- Initial direction (right)
+    )
+    
+    local turret2 = Turret:new(
+        x, y,  -- Same position
+        x, y,  -- Same rotation origin
+        radius or 30,
+        100,   -- speed
+        45,    -- rotation speed
+        1,     -- fire rate
+        math.pi  -- Opposite direction (left)
+    )
+    
+    return {turret1, turret2}  -- Return both turrets as a pair
+end
+
 -- Generalized procedural spawn function
 function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, spawnParams)
+    local config
+    if entityType == "mouth" then
+        config = self.SPAWN_CONFIG_MOUTH
+    elseif entityType == "turret" then
+        config = self.SPAWN_CONFIG_TURRET
+    end
     -- Check spawn cooldown
-    if self:distance(cameraX, cameraY, self.lastSpawnPosition.x, self.lastSpawnPosition.y) < self.SPAWN_CONFIG.SPAWN_COOLDOWN then
+    if self:distance(cameraX, cameraY, self.lastSpawnPosition.x, self.lastSpawnPosition.y) < config.SPAWN_COOLDOWN then
         return nil
     end
 
     -- Mark current chunk as explored
-    local chunk = self:getCurrentChunk(cameraX, cameraY)
+    local chunk = self:getCurrentChunk(cameraX, cameraY, config)
     self.exploredChunks[chunk.x..","..chunk.y] = true
 
     -- Try to find valid spawn position
-    for i = 1, self.SPAWN_CONFIG.MAX_ATTEMPTS do
+    for i = 1, config.MAX_ATTEMPTS do
         local angle = math.random() * math.pi * 2
-        local distance = self.SPAWN_CONFIG.RADIUS * (0.8 + math.random() * 0.4)
+        local distance = config.RADIUS * (0.8 + math.random() * 0.4)
         local x = cameraX + math.cos(angle) * distance
         local y = cameraY + math.sin(angle) * distance
 
-        if self:isPositionValid(x, y, existingEntities, entityType) then
+        if self:isPositionValid(x, y, existingEntities, entityType, config) then
             self.lastSpawnPosition = {x = cameraX, y = cameraY}
             
             -- Create the appropriate entity type
             if entityType == "mouth" then
                 return self:createMouth(x, y, spawnParams and spawnParams.radius)
             elseif entityType == "turret" then
-                return self:createTurret(x, y, spawnParams and spawnParams.radius)
+                local turret1 = self:createTurret(
+                x, 
+                y  -- Position
+                )
+            
+                local turret2 = self:createTurret(
+                    x, 
+                    y  -- Position
+                )
+                turret2.direction = math.pi
+            return {turret1, turret2}  -- Return both turrets as a pairs
             -- Add more entity types as needed
             end
         end
@@ -67,11 +115,11 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
 end
 
 -- Updated position validation
-function EntityFactory:isPositionValid(x, y, entities, entityType)
+function EntityFactory:isPositionValid(x, y, entities, entityType, config)
     for _, e in ipairs(entities) do
         -- Check against all entities of the same type
         if (e.type == entityType or e.name == entityType) and 
-           self:distance(x, y, e.x, e.y) < self.SPAWN_CONFIG.MIN_DISTANCE then
+           self:distance(x, y, e.x, e.y) < config.MIN_DISTANCE then
             return false
         end
     end
@@ -131,8 +179,8 @@ function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHei
 end
 
 -- Keep these helper functions
-function EntityFactory:getCurrentChunk(x, y)
-    local gs = self.SPAWN_CONFIG.GRID_SIZE
+function EntityFactory:getCurrentChunk(x, y, config)
+    local gs = config.GRID_SIZE
     return {
         x = math.floor(x / gs),
         y = math.floor(y / gs)

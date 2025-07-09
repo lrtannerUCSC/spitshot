@@ -119,17 +119,20 @@ function love.update(dt)
     --     table.insert(entities, projectile)
     -- end
 
-    -- local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth")
+    local newTurrets = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "turret")
 
-    -- if newMouth then
-    --     table.insert(entities, newMouth)
-    -- end
-
-    local newTurret = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "turret")
-
-    if newTurret then
-        table.insert(entities, newTurret)
+    if newTurrets then
+        table.insert(entities, newTurrets[1])
+        table.insert(entities, newTurrets[2])
     end
+    
+    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth")
+
+    if newMouth then
+        table.insert(entities, newMouth)
+    end
+
+    
 end
 
 function love.draw()
