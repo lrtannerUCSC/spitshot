@@ -13,6 +13,8 @@ function Projectile:new(x, y, targetX, targetY, radius, speed, color, type)
     instance.type = type or "projectile"
     instance.speed = speed or 200
     instance.active = true
+    instance.targetX = targetX
+    instance.targetY = targetY
     
     -- Calculate initial direction toward target
     instance.direction = math.atan2(targetY - y, targetX - x)
@@ -30,12 +32,12 @@ function Projectile:update(dt)
         self.x = self.x + self.dx * self.speed * dt
         self.y = self.y + self.dy * self.speed * dt
         
-        -- Optional: Deactivate if out of screen bounds
-        local margin = 100
-        if self.x < -margin or self.x > love.graphics.getWidth() + margin or
-        self.y < -margin or self.y > love.graphics.getHeight() + margin then
-            self.active = false
-        end
+        -- -- Optional: Deactivate if out of screen bounds
+        -- local margin = 100
+        -- if self.x < -margin or self.x > love.graphics.getWidth() + margin or
+        -- self.y < -margin or self.y > love.graphics.getHeight() + margin then
+        --     self.active = false
+        -- end
     end
 end
 

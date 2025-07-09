@@ -3,6 +3,7 @@ local Entity = require("entity")
 local Mouth = require("mouth")
 local Gumball = require("gumball")
 local Projectile = require("projectile")
+local EntityFactory = require("entityFactory")
 
 -- Game state
 local entities = {}
@@ -40,9 +41,6 @@ function love.load()
     local mouth2 = Mouth:new(200, 500, 50)
     table.insert(entities, mouth2)
 
-    local proj = Projectile:new(0, 400, 400, 400, 50)
-    table.insert(entities, proj)
-
     gumball = Gumball:new(400, 400, 25, 200)
     table.insert(entities, gumball)
     
@@ -50,6 +48,10 @@ function love.load()
     camera.x = gumball.x
     camera.y = gumball.y
 end
+
+
+local projectileTimer = 0
+local projectileInterval = 1  -- seconds between spawns
 
 function love.update(dt)
     -- Update camera to follow gumball
@@ -62,9 +64,15 @@ function love.update(dt)
     -- Update all entities
     for _, entity in ipairs(entities) do
         entity:update(dt)
+        -- Optional: Deactivate if out of screen bounds
+        local margin = 150
+        if entity.x < -margin or entity.x > love.graphics.getWidth() + camera.x + margin or
+           entity.y < -margin or entity.y > love.graphics.getHeight() + camera.y + margin then
+            entity.active = false
+        end
     end
     
-    -- Collision detection (simplified)
+    -- Collision detection
     for i, entity1 in ipairs(entities) do
         for j, entity2 in ipairs(entities) do
             if i ~= j then
@@ -80,6 +88,20 @@ function love.update(dt)
         if not entities[i].active then
             table.remove(entities, i)
         end
+    end
+
+    -- Projectile spawning with proper timer
+    projectileTimer = projectileTimer + dt
+    if projectileTimer >= projectileInterval then
+        projectileTimer = 0  -- Reset timer
+        local projectile = EntityFactory:createRandomGridProjectile(
+            25,  -- radius
+            love.graphics.getWidth(), 
+            love.graphics.getHeight(), 
+            camera.x, 
+            camera.y
+        )
+        table.insert(entities, projectile)
     end
 end
 
@@ -111,6 +133,11 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    if key == "r" or "R" then
+        local proj = EntityFactory:createRandomProjectile(25, love.graphics.getWidth(), love.graphics.getHeight(), camera.x, camera.y)
+        table.insert(entities, proj)
+        
+    end
 end
 
 function love.mousepressed(x, y)
