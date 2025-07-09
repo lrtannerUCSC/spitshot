@@ -51,7 +51,7 @@ end
 
 
 local projectileTimer = 0
-local projectileInterval = 1  -- seconds between spawns
+local projectileInterval = 0.5  -- seconds between spawns
 
 function love.update(dt)
     -- Update camera to follow gumball
@@ -66,8 +66,8 @@ function love.update(dt)
         entity:update(dt)
         -- Optional: Deactivate if out of screen bounds
         local margin = 150
-        if entity.x < -margin or entity.x > love.graphics.getWidth() + camera.x + margin or
-           entity.y < -margin or entity.y > love.graphics.getHeight() + camera.y + margin then
+        if entity.x > love.graphics.getWidth() + camera.x + margin or
+           entity.y > love.graphics.getHeight() + camera.y + margin then
             entity.active = false
         end
     end
@@ -103,6 +103,12 @@ function love.update(dt)
         )
         table.insert(entities, projectile)
     end
+
+    local newMouth = EntityFactory:attemptProceduralMouthSpawn(camera.x, camera.y, entities)
+
+    if newMouth then
+        table.insert(entities, newMouth)
+    end
 end
 
 function love.draw()
@@ -112,9 +118,16 @@ function love.draw()
     -- Apply camera transformation
     camera:apply()
     
-    -- Draw all entities
+    -- First draw all non-gumball entities
     for _, entity in ipairs(entities) do
-        entity:draw()
+        if entity ~= gumball then  -- Draw everything except gumball first
+            entity:draw()
+        end
+    end
+    
+    -- Then draw the gumball on top
+    if gumball then
+        gumball:draw()
     end
     
     -- Clear camera transformation before drawing HUD
