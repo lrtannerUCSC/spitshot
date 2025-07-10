@@ -216,6 +216,7 @@ end
 
 function love.mousereleased(x, y, button)
     if button == 1 and gumball.isCharging then
+        gumball.currentMouth = nil
         gumball.isCharging = false
         local chargeTime = love.timer.getTime() - gumball.chargeStartTime
         
