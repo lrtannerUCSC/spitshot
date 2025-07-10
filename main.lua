@@ -66,9 +66,9 @@ local projectileTimer = 0
 local projectileInterval = 0.5  -- seconds between spawns
 
 function love.update(dt)
-    -- if gumball.health <= 0 then
-    --     love.event.quit()
-    -- end
+    if gumball.health <= 0 then
+        love.event.quit()
+    end
     -- Update charging if mouse is held down
     if gumball.isCharging then
         gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * (love.timer.getTime() - gumball.chargeStartTime)), gumball.chargeMax)

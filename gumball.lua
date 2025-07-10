@@ -30,6 +30,8 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.visitedMouths = {}
     instance.points = 0
     instance.pointMult = 1
+    instance.iFrames = 0.5
+    instance.iFrameTimer = 0.5
 
     return instance
 end
@@ -39,6 +41,12 @@ function Gumball:update(dt)
     if self.flag then
         self:move(dt)
     end
+    if self.iFrameTimer > 0 then
+        self.iFrameTimer = self.iFrameTimer - dt
+    else
+        self.color = {0.3, 1, 0.3}
+    end
+    
 end
 
 function Gumball:move(dt)
@@ -100,9 +108,12 @@ function Gumball:onCollision(other)
         table.insert(self.visitedMouths, other)
     end
     if other.type == "projectile" then
-        if self.currentMouth == nil then
-            self.color = {1, 0, 0}
-            self.health = self.health - 1
+        if self.flag then
+            if self.iFrameTimer <= 0 then
+                self.iFrameTimer = self.iFrames
+                self.color = {1, 0, 0}
+                self.health = self.health - 1
+            end
         end
     end
 end
