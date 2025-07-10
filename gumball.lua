@@ -11,6 +11,7 @@ function Gumball:new(x, y, radius, speed, color, type)
     local instance = Entity:new(x, y, radius)
     setmetatable(instance, self)
 
+    instance.health = 3
     instance.color = color or {0.3, 1, 0.3}
     instance.type = type or "gumball"
     instance.direction = 0  -- Now in radians (0 = right)
@@ -89,6 +90,7 @@ function Gumball:onCollision(other)
     if other.type == "projectile" then
         if self.currentMouth == nil then
             self.color = {1, 0, 0}
+            self.health = self.health - 1
         end
     end
 end
