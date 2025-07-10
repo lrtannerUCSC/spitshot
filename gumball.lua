@@ -27,6 +27,9 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.currentCharge = 1.0   -- Current charge multiplier (starts at 1x)
     instance.isCharging = false    -- Whether we're currently charging
     instance.chargeStartTime = 0   -- When charging started
+    instance.visitedMouths = {}
+    instance.points = 0
+    instance.pointMult = 1
 
     return instance
 end
@@ -35,9 +38,6 @@ function Gumball:update(dt)
     self.direction = (self.direction + dt * self.rotationSpeed) % (2 * math.pi)
     if self.flag then
         self:move(dt)
-        self.color = {0, 0, 1}  -- Blue when moving
-    else
-        self.color = {0.3, 1, 0.3}  -- Green when stationary
     end
 end
 
@@ -71,7 +71,7 @@ function Gumball:draw()
     
     -- Draw entity type
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print(self.type, self.x-self.radius/3, self.y - 5)
+    love.graphics.print(self.points, self.x-self.radius/3, self.y - 5)
     love.graphics.setColor(1, 1, 1)
 end
 
@@ -86,6 +86,18 @@ function Gumball:onCollision(other)
         self.y = other.y
         self.flag = false
         self.currentMouth = other.id
+        local visited = false
+        for _, mouth in ipairs(self.visitedMouths) do
+            if other.id == mouth.id then
+                visited = true
+            end
+        end
+        if visited then
+            self.points = self.points + 1 * self.pointMult
+        else
+            self.points = self.points + 5 * self.pointMult
+        end
+        table.insert(self.visitedMouths, other)
     end
     if other.type == "projectile" then
         if self.currentMouth == nil then
