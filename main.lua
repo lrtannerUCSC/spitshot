@@ -35,21 +35,21 @@ function love.load()
     -- Set random seed
     math.randomseed(os.time())
 
-    local mouth = Mouth:new(20, 20, 5) -- ORIGIN MARKER LOL
-    table.insert(entities, mouth)
-    local mouth1 = Mouth:new(500, 200, 20)
-    table.insert(entities, mouth1)
-    local mouth2 = Mouth:new(200, 500, 20)
-    table.insert(entities, mouth2)
+    -- local mouth = Mouth:new(20, 20, 5) -- ORIGIN MARKER LOL
+    -- table.insert(entities, mouth)
+    -- local mouth1 = Mouth:new(500, 200, 20)
+    -- table.insert(entities, mouth1)
+    -- local mouth2 = Mouth:new(200, 500, 20)
+    -- table.insert(entities, mouth2)
 
 
-    local turret1 = Turret:new(320, 320, 40, 50, 60, 0.25)
-    table.insert(entities, turret1)
-    local turret2 = Turret:new(320, 320, 40, 50, 60, 0.25, math.rad(180))
-    table.insert(entities, turret2)
+    -- local turret1 = Turret:new(320, 320, 40, 50, 60, 0.25)
+    -- table.insert(entities, turret1)
+    -- local turret2 = Turret:new(320, 320, 40, 50, 60, 0.25, math.rad(180))
+    -- table.insert(entities, turret2)
 
-    local newProj = EntityFactory:createProjectile(150, 150, 0, 30, 50)
-    table.insert(entities, newProj)
+    -- local newProj = EntityFactory:createProjectile(150, 150, 0, 30, 50)
+    -- table.insert(entities, newProj)
 
     gumball = Gumball:new(400, 400, 10, 200)
     table.insert(entities, gumball)
@@ -66,6 +66,11 @@ local projectileTimer = 0
 local projectileInterval = 0.5  -- seconds between spawns
 
 function love.update(dt)
+    -- Update charging if mouse is held down
+    if gumball.isCharging then
+        gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * (love.timer.getTime() - gumball.chargeStartTime)), gumball.chargeMax)
+        gumball.rotationSpeed = gumball.baseRotation * gumball.currentCharge -- MAGIC NUMBER
+    end
     -- Update camera to follow gumball
     if gumball then
         camera.target = gumball
@@ -80,9 +85,20 @@ function love.update(dt)
         else
             entity:update(dt)
         end
-        local margin = 500
-        if entity.x > love.graphics.getWidth() + camera.x + margin or
-           entity.y > love.graphics.getHeight() + camera.y + margin then
+        
+        local margin = 200
+        local screenWidth = love.graphics.getWidth() / camera.scale
+        local screenHeight = love.graphics.getHeight() / camera.scale
+        
+        -- Calculate boundaries relative to camera
+        local leftBound = camera.x - screenWidth/2 - margin
+        local rightBound = camera.x + screenWidth/2 + margin
+        local topBound = camera.y - screenHeight/2 - margin
+        local bottomBound = camera.y + screenHeight/2 + margin
+        
+        -- Check if entity is outside boundaries
+        if entity.x < leftBound or entity.x > rightBound or
+           entity.y < topBound or entity.y > bottomBound then
             entity.active = false
         end
     end
@@ -119,11 +135,18 @@ function love.update(dt)
     --     table.insert(entities, projectile)
     -- end
 
-    local newTurrets = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "turret")
+    local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt")
 
-    if newTurrets then
-        table.insert(entities, newTurrets[1])
-        table.insert(entities, newTurrets[2])
+    if newButt then
+        table.insert(entities, newButt[1])
+        table.insert(entities, newButt[2])
+    end
+
+    local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose")
+
+    if newNose then
+        table.insert(entities, newNose[1])
+        table.insert(entities, newNose[2])
     end
     
     local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth")
@@ -180,15 +203,28 @@ function love.keypressed(key)
     end
 end
 
-function love.mousepressed(x, y)
-    gumball.flag = not gumball.flag
-    if not gumball.flag then
-        gumball.currentMouth = nil
+function love.mousepressed(x, y, button)
+    if button == 1 then  -- Left mouse button
+        gumball.isCharging = true
+        gumball.chargeStartTime = love.timer.getTime()
+        gumball.currentCharge = 1.0  -- Reset charge when starting new press
     end
-    gumball.movementDirection = gumball.direction
 end
 
-function love.mousereleased(x, y)
+function love.mousereleased(x, y, button)
+    if button == 1 and gumball.isCharging then
+        gumball.isCharging = false
+        local chargeTime = love.timer.getTime() - gumball.chargeStartTime
+        
+        -- Calculate charge multiplier (capped at chargeMax)
+        gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * chargeTime), gumball.chargeMax)
+        
+        -- Apply the charged movement
+        gumball.flag = true
+        gumball.movementDirection = gumball.direction
+        gumball.speed = gumball.baseSpeed * gumball.currentCharge/5 -- MAGIC NUMBER
+        gumball.rotationSpeed = gumball.baseRotation
+    end
 end
 
 function love.wheelmoved(x, y)

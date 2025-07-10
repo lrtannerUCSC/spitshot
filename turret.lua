@@ -12,7 +12,7 @@ function Turret:new(x, y, radius, speed, rotationSpeed, fireRate, direction, col
     local instance = Entity:new(x, y, radius)
     setmetatable(instance, self)
 
-    instance.color = color or {1, 0.1, 0.3}
+    instance.color = color or {0.5, 0.1, 0.7}
     instance.type = type or "turret"
     instance.direction = direction or 0  -- Now in radians (0 = right)
     instance.rotationSpeed = math.rad(rotationSpeed) or math.rad(60)
@@ -57,7 +57,7 @@ function Turret:draw()
     -- Left cheek (90 degrees from forward)
     local leftX = math.cos(math.rad(90)) * cheekDistance
     local leftY = math.sin(math.rad(90)) * cheekDistance
-    love.graphics.setColor(1, 0.1, 0.3)
+    love.graphics.setColor(self.color)
     love.graphics.circle("fill", leftX, leftY, cheekSize)
     love.graphics.setColor(0, 0, 0, 0.5)
     love.graphics.circle("line", leftX, leftY, cheekSize)
@@ -65,7 +65,7 @@ function Turret:draw()
     -- Right cheek (-90 degrees from forward)
     local rightX = math.cos(math.rad(-90)) * cheekDistance
     local rightY = math.sin(math.rad(-90)) * cheekDistance
-    love.graphics.setColor(1, 0.1, 0.3)
+    love.graphics.setColor(self.color)
     love.graphics.circle("fill", rightX, rightY, cheekSize)
     love.graphics.setColor(0, 0, 0, 0.5)
     love.graphics.circle("line", rightX, rightY, cheekSize)

@@ -14,11 +14,18 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.color = color or {0.3, 1, 0.3}
     instance.type = type or "gumball"
     instance.direction = 0  -- Now in radians (0 = right)
-    instance.rotationSpeed = math.rad(60)
+    instance.rotationSpeed = math.rad(90)
     instance.speed = speed or 100
     instance.flag = false
     instance.movementDirection = instance.direction
     instance.currentMouth = nil
+    instance.baseSpeed = speed       -- Base movement speed
+    instance.baseRotation = math.rad(90)      -- Base rotation speed (radians/sec)
+    instance.chargeMax = 15.0       -- Maximum charge multiplier
+    instance.chargeRate = 5      -- Charge rate per second
+    instance.currentCharge = 1.0   -- Current charge multiplier (starts at 1x)
+    instance.isCharging = false    -- Whether we're currently charging
+    instance.chargeStartTime = 0   -- When charging started
 
     return instance
 end
