@@ -5,7 +5,7 @@ local Projectile = {}
 Projectile.__index = Projectile
 setmetatable(Projectile, {__index = Entity})
 
-function Projectile:new(x, y, direction, targetX, targetY, radius, speed, color, type)
+function Projectile:new(x, y, direction, targetX, targetY, radius, lifespan, speed, color, type)
     local instance = Entity:new(x, y, radius)
     setmetatable(instance, self)
 
@@ -15,6 +15,8 @@ function Projectile:new(x, y, direction, targetX, targetY, radius, speed, color,
     instance.active = true
     instance.targetX = targetX or nil
     instance.targetY = targetY or nil
+    instance.lifespan =  lifespan or 10
+    instance.lifeDuration = 0
     
     -- Calculate initial direction toward target
     instance.direction = direction or math.atan2(targetY - y, targetX - x)
@@ -31,6 +33,11 @@ function Projectile:update(dt)
         -- Move continuously in the calculated direction
         self.x = self.x + self.dx * self.speed * dt
         self.y = self.y + self.dy * self.speed * dt
+        
+        self.lifeDuration = self.lifeDuration + dt
+        if self.lifeDuration >= self.lifespan then
+            self.active = false
+        end
         
         -- -- Optional: Deactivate if out of screen bounds
         -- local margin = 100

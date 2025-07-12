@@ -98,6 +98,7 @@ function Turret:shoot(entities)
         nil,
         nil,
         10,  -- radius
+        10,  -- lifespan
         100  -- speed
     )
     table.insert(entities, projectile)

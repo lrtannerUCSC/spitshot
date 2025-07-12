@@ -14,7 +14,9 @@ local gumball = nil
 local camera = {
     x = 0,
     y = 0,
-    scale = 0.5,
+    scale = 1,
+    minScale = 0.5,
+    maxScale = 2,
     target = nil
 }
 
@@ -30,7 +32,7 @@ function camera:clear()
 end
 
 function love.load()
-    love.graphics.setFont(love.graphics.newFont(12))
+    --love.graphics.setFont(love.graphics.newFont(12))
     love.entities = entities
 
     -- Set random seed
@@ -66,10 +68,10 @@ end
 
 
 function love.update(dt)
-    love.graphics.setFont(love.graphics.newFont(12))
-    if gumball.health <= 0 then
-        love.event.quit()
-    end
+    --love.graphics.setFont(love.graphics.newFont(12))
+    -- if gumball.health <= 0 then
+    --     love.event.quit()
+    -- end
     -- Update charging if mouse is held down
     if gumball.isCharging then
         gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * (love.timer.getTime() - gumball.chargeStartTime)), gumball.chargeMax)
@@ -89,11 +91,11 @@ function love.update(dt)
         else
             entity:update(dt)
         end
-        love.graphics.setFont(love.graphics.newFont(12))
+        --love.graphics.setFont(love.graphics.newFont(12))
 
-        local margin = 50
-        local screenWidth = love.graphics.getWidth() / 0.1 -- MIN CAMERA SCALE HARD CODED RN FIX THIS
-        local screenHeight = love.graphics.getHeight() / 0.1
+        local margin = 200
+        local screenWidth = love.graphics.getWidth() / camera.minScale
+        local screenHeight = love.graphics.getHeight() / camera.minScale
         
         -- Calculate boundaries relative to camera
         local leftBound = camera.x - screenWidth/2 - margin
@@ -233,5 +235,5 @@ function love.wheelmoved(x, y)
         camera.scale = camera.scale / 1.1
     end
     -- Limit zoom range
-    camera.scale = math.max(0.1, math.min(2, camera.scale))
+    camera.scale = math.max(camera.minScale, math.min(camera.maxScale, camera.scale))
 end

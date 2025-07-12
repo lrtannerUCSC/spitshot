@@ -47,10 +47,11 @@ function EntityFactory:update(dt, entities, camera)
     -- Handle projectile wall spawning
     local params = {
         interval = 5,          -- seconds between spawns
-        count = 50,            -- number of projectiles
+        count = 20,            -- number of projectiles
         direction = "top",    -- "left", "right", "top", "bottom"
-        speed = 50,            -- projectile speed
-        radius = 50,
+        speed = 25,            -- projectile speed
+        radius = 20,
+        lifespan = 60,
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
@@ -62,18 +63,19 @@ function EntityFactory:update(dt, entities, camera)
     end
 end
 -- Entity creation functions
-function EntityFactory:createProjectile(x, y, direction, radius, speed)
-    return Projectile:new(x, y, direction, nil, nil, radius, speed)
+function EntityFactory:createProjectile(x, y, direction, radius, speed, lifespan)
+    return Projectile:new(x, y, direction, nil, nil, radius,lifespan, speed )
 end
 
 function EntityFactory:spawnProjectileWall(dt, camera, params)
     -- Default parameters
     local defaults = {
         interval = 5,          -- seconds between spawns
-        count = 50,            -- number of projectiles
+        count = 5,            -- number of projectiles
         direction = "left",    -- "left", "right", "top", "bottom"
         speed = 30,            -- projectile speed
         radius = 25,
+        lifespan = 15,
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
@@ -99,8 +101,8 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
         
         -- Calculate starting position based on direction
         local projX, projY
-        local screenWidth = love.graphics.getWidth() * 10
-        local screenHeight = love.graphics.getHeight() * 10
+        local screenWidth = love.graphics.getWidth() / camera.minScale
+        local screenHeight = love.graphics.getHeight() / camera.minScale
         
         if params.direction == "left" then
             projX = camera.x - screenWidth/2 - params.offsetX
@@ -125,7 +127,8 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
                 projX, projY, 
                 params.angle, 
                 params.radius,
-                params.speed
+                params.speed,
+                params.lifespan
             )
             
             if projectile then
@@ -244,7 +247,7 @@ function EntityFactory:isPositionValid(x, y, entities, entityType, config)
     return true
 end
 
-function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight, originX, originY)
+function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight, originX, originY, lifespan)
 
     -- Calculate the minimum radius needed to ensure off-screen spawning
     -- (distance from center to corner plus padding)
@@ -261,10 +264,10 @@ function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight,
     local targetX = originX + math.random(-screenWidth/4, screenWidth/4)
     local targetY = originY + math.random(-screenHeight/4, screenHeight/4)
     
-    return Projectile:new(projX, projY, nil, targetX, targetY, radius)
+    return Projectile:new(projX, projY, nil, targetX, targetY, radius, lifespan)
 end
 
-function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHeight, originX, originY)
+function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHeight, originX, originY, lifespan)
     -- Choose one of the four cardinal directions (0=right, 1=left, 2=down, 3=up)
     local direction = math.random(0, 3)
     
@@ -293,7 +296,7 @@ function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHei
         targetY = originY - screenHeight/2 - padding
     end
     
-    return Projectile:new(projX, projY, nil, targetX, targetY, radius)
+    return Projectile:new(projX, projY, nil, targetX, targetY, radius, lifespan)
 end
 
 -- Keep these helper functions
