@@ -62,8 +62,8 @@ function love.load()
     
     
     -- Initialize camera to gumball position
-    camera.x = gumball.x
-    camera.y = gumball.y
+    camera.x = love.graphics.getWidth() / 2 * camera.scale
+    camera.y = love.graphics.getHeight() / 2 * camera.scale
 end
 
 
@@ -80,12 +80,12 @@ function love.update(dt)
         gumball.rotationSpeed = gumball.baseRotation * gumball.currentCharge -- MAGIC NUMBER
     end
     -- Update camera to follow gumball
-    if gumball then
-        camera.target = gumball
-        camera.x = camera.x + (gumball.x - camera.x) * 0.1
-        camera.y = camera.y + (gumball.y - camera.y) * 0.1
-    end
-    
+    -- if gumball then
+    --     camera.target = gumball
+    --     camera.x = camera.x + (gumball.x - camera.x) * 0.1
+    --     camera.y = camera.y + (gumball.y - camera.y) * 0.1
+    -- end
+    camera.y = camera.y + dt * 50
     -- Update all entities=
     for _, entity in ipairs(entities) do
         if entity.type == "butt" or entity.type == "nose"  or entity.type == "turret" then
@@ -95,15 +95,16 @@ function love.update(dt)
         end
         --love.graphics.setFont(love.graphics.newFont(12))
 
-        local margin = 200
+        local marginX = 50
+        local marginY = love.graphics.getHeight() / camera.minScale
         local screenWidth = love.graphics.getWidth() / camera.minScale
         local screenHeight = love.graphics.getHeight() / camera.minScale
         
         -- Calculate boundaries relative to camera
-        local leftBound = camera.x - screenWidth/2 - margin
-        local rightBound = camera.x + screenWidth/2 + margin
-        local topBound = camera.y - screenHeight/2 - margin
-        local bottomBound = camera.y + screenHeight/2 + margin
+        local leftBound = camera.x - screenWidth/2 - marginX
+        local rightBound = camera.x + screenWidth/2 + marginX
+        local topBound = camera.y - screenHeight/2 - marginY
+        local bottomBound = camera.y + screenHeight/2 + marginY
         
         -- Check if entity is outside boundaries
         if entity.x < leftBound or entity.x > rightBound or

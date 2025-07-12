@@ -57,22 +57,44 @@ EntityFactory.lastSpawnPositions = {
 
 function EntityFactory:update(dt, entities, camera)
     -- Handle projectile wall spawning
-    local params = {
-        interval = 5,          -- seconds between spawns
+    local params1 = {
+        interval = 10,          -- seconds between spawns
+        initialInterval = 10,
         count = 5,            -- number of projectiles
-        direction = "top",    -- "left", "right", "top", "bottom"
+        direction = "right",    -- "left", "right", "top", "bottom"
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
-        offsetY = 0,           -- additional Y offset
+        offsetY = love.graphics.getHeight()*camera.minScale *1.5,           -- additional Y offset
         
         radius = 25,
-        speed = 30,            -- projectile speed
+        speed = 65,            -- projectile speed
         color = {1, 0, 1},
         type = "projectile",
-        lifespan = 15,
+        lifespan = 60,
     }
-    local newProjectiles = EntityFactory:spawnProjectileWall(dt, camera, params)
+    local newProjectiles = EntityFactory:spawnProjectileWall(dt, camera, params1)
+
+    local params2 = {
+        interval = 20,          -- seconds between spawns
+        initialInterval = 15,
+        count = 5,            -- number of projectiles
+        direction = "top",    -- "left", "right", "top", "bottom"
+        spread = 2,          -- spacing multiplier
+        angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
+        offsetX = 0,           -- additional X offset
+        offsetY = 0,
+        
+        radius = 45,
+        speed = 55,            -- projectile speed
+        color = {1, 0, 1},
+        type = "projectile",
+        lifespan = 60,
+    }
+    local newProjectiles2 = EntityFactory:spawnProjectileWall(dt, camera, params2)
+    for _, projectile in ipairs(newProjectiles2) do
+        table.insert(newProjectiles, projectile)
+    end
     for _, projectile in ipairs(newProjectiles) do
         table.insert(entities, projectile)
     end
@@ -109,7 +131,7 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
     end
 
     -- Initialize timer if it doesn't exist
-    self.projectileWallTimer = self.projectileWallTimer or 0
+    self.projectileWallTimer = self.projectileWallTimer or params.initialInterval
     self.projectileWallTimer = self.projectileWallTimer + dt
 
     local newProjectiles = {}
@@ -124,17 +146,17 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
         
         if params.direction == "left" then
             projX = camera.x - screenWidth/2 - params.offsetX
-            projY = camera.y - screenHeight/params.spread + params.offsetY
+            projY = camera.y - screenHeight/2 + (screenHeight/params.count)/2 + params.offsetY
         elseif params.direction == "right" then
             projX = camera.x + screenWidth/2 + params.offsetX
-            projY = camera.y - screenHeight/params.spread + params.offsetY
+            projY = camera.y - screenHeight/2 + (screenHeight/params.count)/2 + params.offsetY
             params.angle = math.pi  -- Face left
         elseif params.direction == "top" then
-            projX = camera.x - screenWidth/params.spread + params.offsetX
+            projX = camera.x - screenWidth/2 + (screenWidth/params.count)/2 + params.offsetX
             projY = camera.y - screenHeight/2 - params.offsetY
             params.angle = math.pi/2  -- Face down
         elseif params.direction == "bottom" then
-            projX = camera.x - screenWidth/params.spread + params.offsetX
+            projX = camera.x - screenWidth/2 + (screenWidth/params.count)/2 + params.offsetX
             projY = camera.y + screenHeight/2 + params.offsetY
             params.angle = -math.pi/2  -- Face up
         end
@@ -149,9 +171,9 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
             
             -- Adjust position for next projectile
             if params.direction == "left" or params.direction == "right" then
-                projY = projY + screenHeight / (params.count * 0.5)  -- Vertical spread
+                projY = projY + screenHeight / (params.count)  -- Vertical spread
             else
-                projX = projX + screenWidth / (params.count * 0.5)   -- Horizontal spread
+                projX = projX + screenWidth / (params.count)   -- Horizontal spread
             end
         end
     end
