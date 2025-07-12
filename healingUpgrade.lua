@@ -5,14 +5,11 @@ local HealingUpgrade = {}
 HealingUpgrade.__index = HealingUpgrade
 setmetatable(HealingUpgrade, {__index = Upgrade})
 
-function HealingUpgrade:new(x, y, radius, speed, color, type, health)
-    local instance = Upgrade:new(x, y, radius)
+function HealingUpgrade:new(x, y, radius, color, type, health)
+    local instance = Upgrade:new(x, y, radius, color, type)
     setmetatable(instance, self)
 
-    instance.color = color or {0, 0.5, 0.2}
     instance.type = type or "healingUpgrade"
-    instance.speed = speed or 0
-    instance.active = true
     instance.health = health
     
     return instance

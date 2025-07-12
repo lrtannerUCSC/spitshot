@@ -8,15 +8,13 @@ Gumball.__index = Gumball
 setmetatable(Gumball, {__index = Entity})
 
 function Gumball:new(x, y, radius, speed, color, type)
-    local instance = Entity:new(x, y, radius)
+    local instance = Entity:new(x, y, radius, speed, color, type)
     setmetatable(instance, self)
 
-    instance.health = 3
-    instance.color = color or {0.3, 1, 0.3}
     instance.type = type or "gumball"
+    instance.health = 3
     instance.direction = 0  -- Now in radians (0 = right)
     instance.rotationSpeed = math.rad(90)
-    instance.speed = speed or 100
     instance.flag = false
     instance.movementDirection = instance.direction
     instance.currentMouth = nil

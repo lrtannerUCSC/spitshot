@@ -47,15 +47,18 @@ function EntityFactory:update(dt, entities, camera)
     -- Handle projectile wall spawning
     local params = {
         interval = 5,          -- seconds between spawns
-        count = 20,            -- number of projectiles
+        count = 5,            -- number of projectiles
         direction = "top",    -- "left", "right", "top", "bottom"
-        speed = 25,            -- projectile speed
-        radius = 20,
-        lifespan = 60,
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
-        offsetY = 0            -- additional Y offset
+        offsetY = 0,           -- additional Y offset
+        
+        radius = 25,
+        speed = 30,            -- projectile speed
+        color = {1, 0, 1},
+        type = "projectile",
+        lifespan = 15,
     }
     local newProjectiles = EntityFactory:spawnProjectileWall(dt, camera, params)
     for _, projectile in ipairs(newProjectiles) do
@@ -63,8 +66,8 @@ function EntityFactory:update(dt, entities, camera)
     end
 end
 -- Entity creation functions
-function EntityFactory:createProjectile(x, y, direction, radius, speed, lifespan)
-    return Projectile:new(x, y, direction, nil, nil, radius,lifespan, speed )
+function EntityFactory:createProjectile(x, y, radius, speed, color, type, direction, lifespan)
+    return Projectile:new(x, y, radius, speed, color, type, direction, nil, nil, lifespan)
 end
 
 function EntityFactory:spawnProjectileWall(dt, camera, params)
@@ -73,13 +76,16 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
         interval = 5,          -- seconds between spawns
         count = 5,            -- number of projectiles
         direction = "left",    -- "left", "right", "top", "bottom"
-        speed = 30,            -- projectile speed
-        radius = 25,
-        lifespan = 15,
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
-        offsetY = 0            -- additional Y offset
+        offsetY = 0,           -- additional Y offset
+
+        radius = 25,
+        speed = 30,            -- projectile speed
+        color = {1, 0, 1},
+        type = "projectile",
+        lifespan = 15,
     }
     
     -- Merge provided params with defaults
@@ -123,13 +129,7 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
         
         -- Create wall of projectiles
         for i = 0, params.count - 1 do
-            local projectile = EntityFactory:createProjectile(
-                projX, projY, 
-                params.angle, 
-                params.radius,
-                params.speed,
-                params.lifespan
-            )
+            local projectile = EntityFactory:createProjectile(projX, projY, params.radius, params.speed, params.color, params.type, params.angle, params.lifespan)
             
             if projectile then
                 table.insert(newProjectiles, projectile)
@@ -147,34 +147,18 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
     return newProjectiles
 end
 
-function EntityFactory:createMouth(x, y, radius)
-    return Mouth:new(x, y, radius or 20)
+function EntityFactory:createMouth(x, y, radius, color)
+    return Mouth:new(x, y, radius, color, "mouth")
 end
 
-function EntityFactory:createTurret(x, y, radius)
-    return Turret:new(x, y, radius or 15, 100, 45, 1)
+function EntityFactory:createTurret(x, y, radius, color, type, direction, rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
+    return Turret:new(x, y, radius, color, type, direction, rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
 end
 
-function EntityFactory:createTwinTurrets(x, y, radius)
-    local turret1 = Turret:new(
-        x, y,  -- Position
-        x, y,  -- Rotation origin (same as position)
-        radius or 15,
-        100,   -- speed
-        45,    -- rotation speed (degrees/sec)
-        1,     -- fire rate
-        0      -- Initial direction (right)
-    )
+function EntityFactory:createTwinTurrets(x, y, radius, color, type, direction, rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
+    local turret1 = Turret:new(x, y, radius, color, type, direction, rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
     
-    local turret2 = Turret:new(
-        x, y,  -- Same position
-        x, y,  -- Same rotation origin
-        radius or 30,
-        100,   -- speed
-        45,    -- rotation speed
-        1,     -- fire rate
-        math.pi  -- Opposite direction (left)
-    )
+    local turret2 = Turret:new(x, y, radius, color, type, (direction + math.pi), rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
     
     return {turret1, turret2}  -- Return both turrets as a pair
 end
@@ -192,7 +176,7 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
     local chunk = self:getCurrentChunk(cameraX, cameraY, config)
     self.exploredChunks[chunk.x..","..chunk.y] = true
 
-    -- Try to find valid spawn position
+    -- Try to find valid spawn positionspawnParams.projRadius, 
     for i = 1, config.MAX_ATTEMPTS do
         local angle = math.random() * math.pi * 2
         local distance = config.RADIUS * (0.8 + math.random() * 0.4)
@@ -204,29 +188,19 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
             
             -- Create the appropriate entity type
             if entityType == "mouth" then
-                return self:createMouth(x, y, spawnParams and spawnParams.radius)
+                return self:createMouth(x, y, spawnParams.radius, spawnParams.color)
             elseif entityType == "butt" then
-                local turret1 = self:createTurret(
-                x, 
-                y  -- Position
-                )
+                local turret1 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
             
-                local turret2 = self:createTurret(
-                    x, 
-                    y  -- Position
-                )
+                local turret2 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
                 turret2.direction = math.pi
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "nose" then
-                local turret1 = self:createTurret(
-                x-20, 
-                y  -- Position
-                )
+                local turret1 = self:createTurret(x-20, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+
             
-                local turret2 = self:createTurret(
-                    x+20, 
-                    y  -- Position
-                )
+                local turret2 = self:createTurret(x+20, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+
                 return {turret1, turret2}  -- Return both turrets as a pairs
             -- Add more entity types as needed
             end
@@ -264,7 +238,7 @@ function EntityFactory:createRandomProjectile(radius, screenWidth, screenHeight,
     local targetX = originX + math.random(-screenWidth/4, screenWidth/4)
     local targetY = originY + math.random(-screenHeight/4, screenHeight/4)
     
-    return Projectile:new(projX, projY, nil, targetX, targetY, radius, lifespan)
+    return Projectile:new(projX, projY, radius, 50, nil, nil, targetX, targetY, lifespan)
 end
 
 function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHeight, originX, originY, lifespan)
@@ -296,7 +270,7 @@ function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHei
         targetY = originY - screenHeight/2 - padding
     end
     
-    return Projectile:new(projX, projY, nil, targetX, targetY, radius, lifespan)
+    return Projectile:new(projX, projY, radius, 50, nil, nil, targetX, targetY, lifespan)
 end
 
 -- Keep these helper functions

@@ -54,7 +54,9 @@ function love.load()
     -- local newProj = EntityFactory:createProjectile(150, 150, 0, 30, 50)
     -- table.insert(entities, newProj)
 
-    gumball = Gumball:new(400, 400, 10, 200)
+    local originX = love.graphics.getWidth() / 2 * camera.scale
+    local originY = love.graphics.getHeight() / 2 * camera.scale
+    gumball = Gumball:new(originX, originY, 10, 200, {0, 1, 0})
     table.insert(entities, gumball)
 
     
@@ -86,7 +88,7 @@ function love.update(dt)
     
     -- Update all entities=
     for _, entity in ipairs(entities) do
-        if entity.type == "turret" then
+        if entity.type == "butt" or entity.type == "nose"  or entity.type == "turret" then
             entity:update(dt, entities)
         else
             entity:update(dt)
@@ -130,20 +132,47 @@ function love.update(dt)
 
     EntityFactory:update(dt, entities, camera)
 
-    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
+    local mouthSpawnParams = {
+        radius = 20,
+        color = {1, 0, 0},
+        type = "mouth"
+    }
+    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1, mouthSpawnParams)
 
     if newMouth then
         table.insert(entities, newMouth)
     end
 
-    local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2)
+    local buttSpawnParams = {
+        radius = 10,
+        color = {1, 0, 1},
+        type = "butt",
+        direction = 0,
+        rotationSpeed = 60,
+        shotSpeed = 30,
+        fireRate = 1,
+        projRadius = 5,
+        projLifespan = 15
+    }
+    local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2, buttSpawnParams)
 
     if newButt then
         table.insert(entities, newButt[1])
         table.insert(entities, newButt[2])
     end
 
-    local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose", 3)
+    local noseSpawnParams = {
+        radius = 15,
+        color = {0, 0, 1},
+        type = "nose",
+        direction = 0,
+        rotationSpeed = 90,
+        shotSpeed = 20,
+        fireRate = .75,
+        projRadius = 7.5,
+        projLifespan = 15
+    }
+    local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose", 3, noseSpawnParams)
 
     if newNose then
         table.insert(entities, newNose[1])

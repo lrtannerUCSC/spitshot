@@ -5,7 +5,7 @@ local Entity = {}
 Entity.__index = Entity
 
 -- Constructor
-function Entity:new(x, y, radius)
+function Entity:new(x, y, radius, speed, color, type)
     local instance = {}
     setmetatable(instance, self)
     
@@ -13,9 +13,9 @@ function Entity:new(x, y, radius)
     instance.x = x or 0
     instance.y = y or 0
     instance.radius = radius or 100
-    instance.speed = 50
-    instance.color = {1, 1, 1}
-    instance.type = "entity"
+    instance.speed = speed or 50
+    instance.color = color or {1, 1, 1}
+    instance.type = type or "entity"
     instance.active = true
     instance.id = tostring(math.random(1000000))
     

@@ -8,18 +8,21 @@ local Turret = {}
 Turret.__index = Turret
 setmetatable(Turret, {__index = Entity})
 
-function Turret:new(x, y, radius, speed, rotationSpeed, fireRate, direction, color, type)
-    local instance = Entity:new(x, y, radius)
+function Turret:new(x, y, radius, color, type, direction, rotationSpeed, shotSpeed, fireRate, projRadius, projLifespan)
+    local instance = Entity:new(x, y, radius, 0, color, type)
     setmetatable(instance, self)
 
-    instance.color = color or {0.5, 0.1, 0.7}
+    instance.radius = radius
+    instance.color = color
     instance.type = type or "turret"
     instance.direction = direction or 0  -- Now in radians (0 = right)
     instance.rotationSpeed = math.rad(rotationSpeed) or math.rad(60)
-    instance.speed = speed or 100 -- Speed it shoots
+    instance.shotSpeed = shotSpeed
     instance.cooldown = fireRate
     instance.timer = fireRate
     instance.projectiles = {}
+    instance.projRadius = projRadius
+    instance.projLifespan = projLifespan
 
     return instance
 end
@@ -94,14 +97,19 @@ function Turret:shoot(entities)
     local projectile = Projectile:new(
         self.x,
         self.y,
+        self.projRadius,
+        self.shotSpeed,
+        self.color,
+        nil,
         self.direction + math.pi,  -- Fire backward,
         nil,
         nil,
-        10,  -- radius
-        10,  -- lifespan
-        100  -- speed
+        self.projLifespan  -- lifespan
     )
-    table.insert(entities, projectile)
+    if projectile then 
+        print(entities)
+        table.insert(entities, projectile)
+    end
 end
 
 function Turret:checkCollision(other)

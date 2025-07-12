@@ -5,14 +5,11 @@ local Projectile = {}
 Projectile.__index = Projectile
 setmetatable(Projectile, {__index = Entity})
 
-function Projectile:new(x, y, direction, targetX, targetY, radius, lifespan, speed, color, type)
-    local instance = Entity:new(x, y, radius)
+function Projectile:new(x, y, radius, speed, color, type, direction, targetX, targetY, lifespan)
+    local instance = Entity:new(x, y, radius, speed, color, type)
     setmetatable(instance, self)
 
-    instance.color = color or {1, 0.5, 0.2}  -- Orange projectiles by default
     instance.type = type or "projectile"
-    instance.speed = speed or 200
-    instance.active = true
     instance.targetX = targetX or nil
     instance.targetY = targetY or nil
     instance.lifespan =  lifespan or 10
