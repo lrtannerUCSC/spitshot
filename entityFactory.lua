@@ -43,9 +43,105 @@ EntityFactory.lastSpawnPositions = {
     nose = {x = 0, y = 0}
 }
 
+function EntityFactory:update(dt, entities, camera)
+    -- Handle projectile wall spawning
+    local params = {
+        interval = 3,          -- seconds between spawns
+        count = 15,            -- number of projectiles
+        direction = "top",    -- "left", "right", "top", "bottom"
+        speed = 100,            -- projectile speed
+        radius = 25,
+        spread = 1.5,          -- spacing multiplier
+        angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
+        offsetX = 0,           -- additional X offset
+        offsetY = 0            -- additional Y offset
+    }
+    local newProjectiles = EntityFactory:spawnProjectileWall(dt, camera, params)
+    for _, projectile in ipairs(newProjectiles) do
+        table.insert(entities, projectile)
+    end
+end
 -- Entity creation functions
 function EntityFactory:createProjectile(x, y, direction, radius, speed)
     return Projectile:new(x, y, direction, nil, nil, radius, speed)
+end
+
+function EntityFactory:spawnProjectileWall(dt, camera, params)
+    -- Default parameters
+    local defaults = {
+        interval = 3,          -- seconds between spawns
+        count = 15,            -- number of projectiles
+        direction = "left",    -- "left", "right", "top", "bottom"
+        speed = 30,            -- projectile speed
+        radius = 25,
+        spread = 1.5,          -- spacing multiplier
+        angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
+        offsetX = 0,           -- additional X offset
+        offsetY = 0            -- additional Y offset
+    }
+    
+    -- Merge provided params with defaults
+    params = params or {}
+    for k, v in pairs(defaults) do
+        if params[k] == nil then
+            params[k] = v
+        end
+    end
+
+    -- Initialize timer if it doesn't exist
+    self.projectileWallTimer = self.projectileWallTimer or 0
+    self.projectileWallTimer = self.projectileWallTimer + dt
+
+    local newProjectiles = {}
+
+    if self.projectileWallTimer >= params.interval then
+        self.projectileWallTimer = 0  -- Reset timer
+        
+        -- Calculate starting position based on direction
+        local projX, projY
+        local screenWidth = love.graphics.getWidth() / camera.scale
+        local screenHeight = love.graphics.getHeight() / camera.scale
+        
+        if params.direction == "left" then
+            projX = camera.x - screenWidth/2 - params.offsetX
+            projY = camera.y - screenHeight/params.spread + params.offsetY
+        elseif params.direction == "right" then
+            projX = camera.x + screenWidth/2 + params.offsetX
+            projY = camera.y - screenHeight/params.spread + params.offsetY
+            params.angle = math.pi  -- Face left
+        elseif params.direction == "top" then
+            projX = camera.x - screenWidth/params.spread + params.offsetX
+            projY = camera.y - screenHeight/2 - params.offsetY
+            params.angle = math.pi/2  -- Face down
+        elseif params.direction == "bottom" then
+            projX = camera.x - screenWidth/params.spread + params.offsetX
+            projY = camera.y + screenHeight/2 + params.offsetY
+            params.angle = -math.pi/2  -- Face up
+        end
+        
+        -- Create wall of projectiles
+        for i = 0, params.count - 1 do
+            local projectile = EntityFactory:createProjectile(
+                projX, projY, 
+                params.angle, 
+                params.radius,
+                params.speed
+            )
+            
+            if projectile then
+                table.insert(newProjectiles, projectile)
+            end
+            
+            -- Adjust position for next projectile
+            if params.direction == "left" or params.direction == "right" then
+                projY = projY + screenHeight / (params.count * 0.5)  -- Vertical spread
+            else
+                projX = projX + screenWidth / (params.count * 0.5)   -- Horizontal spread
+            end
+        end
+    end
+
+    return newProjectiles
 end
 
 function EntityFactory:createMouth(x, y, radius)

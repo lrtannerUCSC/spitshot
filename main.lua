@@ -62,8 +62,7 @@ function love.load()
 end
 
 
-local projectileTimer = 0
-local projectileInterval = 0.5  -- seconds between spawns
+
 
 function love.update(dt)
     if gumball.health <= 0 then
@@ -124,19 +123,13 @@ function love.update(dt)
         end
     end
 
-    -- -- Projectile spawning with proper timer
-    -- projectileTimer = projectileTimer + dt
-    -- if projectileTimer >= projectileInterval then
-    --     projectileTimer = 0  -- Reset timer
-    --     local projectile = EntityFactory:createRandomGridProjectile(
-    --         15,  -- radius
-    --         love.graphics.getWidth(), 
-    --         love.graphics.getHeight(), 
-    --         camera.x, 
-    --         camera.y
-    --     )
-    --     table.insert(entities, projectile)
-    -- end
+    EntityFactory:update(dt, entities, camera)
+    
+    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
+
+    if newMouth then
+        table.insert(entities, newMouth)
+    end
 
     local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2)
 
@@ -152,11 +145,6 @@ function love.update(dt)
         table.insert(entities, newNose[2])
     end
     
-    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
-
-    if newMouth then
-        table.insert(entities, newMouth)
-    end
 
     
 end
