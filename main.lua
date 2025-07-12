@@ -30,6 +30,7 @@ function camera:clear()
 end
 
 function love.load()
+    love.graphics.setFont(love.graphics.newFont(12))
     love.entities = entities
 
     -- Set random seed
@@ -65,6 +66,7 @@ end
 
 
 function love.update(dt)
+    love.graphics.setFont(love.graphics.newFont(12))
     if gumball.health <= 0 then
         love.event.quit()
     end
@@ -87,10 +89,11 @@ function love.update(dt)
         else
             entity:update(dt)
         end
-        
-        local margin = 200
-        local screenWidth = love.graphics.getWidth() / camera.scale
-        local screenHeight = love.graphics.getHeight() / camera.scale
+        love.graphics.setFont(love.graphics.newFont(12))
+
+        local margin = 50
+        local screenWidth = love.graphics.getWidth() / 0.1 -- MIN CAMERA SCALE HARD CODED RN FIX THIS
+        local screenHeight = love.graphics.getHeight() / 0.1
         
         -- Calculate boundaries relative to camera
         local leftBound = camera.x - screenWidth/2 - margin
@@ -124,7 +127,7 @@ function love.update(dt)
     end
 
     EntityFactory:update(dt, entities, camera)
-    
+
     local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
 
     if newMouth then
@@ -146,7 +149,7 @@ function love.update(dt)
     end
     
 
-    
+
 end
 
 function love.draw()
@@ -199,6 +202,9 @@ function love.mousepressed(x, y, button)
         gumball.isCharging = true
         gumball.chargeStartTime = love.timer.getTime()
         gumball.currentCharge = 1.0  -- Reset charge when starting new press
+    end
+    if button == 2 then  -- Right mouse button
+        gumball.directionDirection = gumball.directionDirection * -1
     end
 end
 

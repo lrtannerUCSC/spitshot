@@ -30,14 +30,15 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.visitedMouths = {}
     instance.points = 0
     instance.pointMult = 1
-    instance.iFrames = 0.5
+    instance.iFrames = 0.8
     instance.iFrameTimer = 0.5
+    instance.directionDirection = 1
 
     return instance
 end
 
 function Gumball:update(dt)
-    self.direction = (self.direction + dt * self.rotationSpeed) % (2 * math.pi)
+    self.direction = (self.direction + dt * self.directionDirection * self.rotationSpeed) % (2 * math.pi)
     if self.flag then
         self:move(dt)
     end
@@ -67,8 +68,8 @@ function Gumball:draw()
     love.graphics.translate(self.x, self.y)
     love.graphics.rotate(self.direction+math.rad(90))  -- Rotate to current direction
     
-    local rect_width = self.radius/5
-    local rect_height = self.radius*2
+    local rect_width = self.radius/2
+    local rect_height = self.radius*3
     love.graphics.rectangle("fill", 
         -rect_width/2,  -- X position: half width left to center
         -rect_height, -- Y position: half height up to center
@@ -79,7 +80,7 @@ function Gumball:draw()
     
     -- Draw entity type
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print(self.points, self.x-self.radius/3, self.y - 5)
+    love.graphics.print(self.points, self.x-self.radius/2, self.y-self.radius/2)
     love.graphics.setColor(1, 1, 1)
 end
 
@@ -115,6 +116,9 @@ function Gumball:onCollision(other)
                 self.health = self.health - 1
             end
         end
+    end
+    if other.type == "healingUpgrade" then
+        self.health = self.health + 1
     end
 end
 

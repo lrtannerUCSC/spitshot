@@ -46,11 +46,11 @@ EntityFactory.lastSpawnPositions = {
 function EntityFactory:update(dt, entities, camera)
     -- Handle projectile wall spawning
     local params = {
-        interval = 3,          -- seconds between spawns
-        count = 15,            -- number of projectiles
+        interval = 5,          -- seconds between spawns
+        count = 50,            -- number of projectiles
         direction = "top",    -- "left", "right", "top", "bottom"
-        speed = 100,            -- projectile speed
-        radius = 25,
+        speed = 50,            -- projectile speed
+        radius = 50,
         spread = 1.5,          -- spacing multiplier
         angle = 0,             -- base angle (0=right, math.pi/2=down, etc.)
         offsetX = 0,           -- additional X offset
@@ -69,8 +69,8 @@ end
 function EntityFactory:spawnProjectileWall(dt, camera, params)
     -- Default parameters
     local defaults = {
-        interval = 3,          -- seconds between spawns
-        count = 15,            -- number of projectiles
+        interval = 5,          -- seconds between spawns
+        count = 50,            -- number of projectiles
         direction = "left",    -- "left", "right", "top", "bottom"
         speed = 30,            -- projectile speed
         radius = 25,
@@ -99,8 +99,8 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
         
         -- Calculate starting position based on direction
         local projX, projY
-        local screenWidth = love.graphics.getWidth() / camera.scale
-        local screenHeight = love.graphics.getHeight() / camera.scale
+        local screenWidth = love.graphics.getWidth() * 10
+        local screenHeight = love.graphics.getHeight() * 10
         
         if params.direction == "left" then
             projX = camera.x - screenWidth/2 - params.offsetX
@@ -149,14 +149,14 @@ function EntityFactory:createMouth(x, y, radius)
 end
 
 function EntityFactory:createTurret(x, y, radius)
-    return Turret:new(x, y, radius or 30, 100, 45, 1)
+    return Turret:new(x, y, radius or 15, 100, 45, 1)
 end
 
 function EntityFactory:createTwinTurrets(x, y, radius)
     local turret1 = Turret:new(
         x, y,  -- Position
         x, y,  -- Rotation origin (same as position)
-        radius or 30,
+        radius or 15,
         100,   -- speed
         45,    -- rotation speed (degrees/sec)
         1,     -- fire rate
