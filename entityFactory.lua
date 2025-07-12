@@ -8,15 +8,16 @@ local Turret = require("turret")  -- Make sure to require your Turret class
 local EntityFactory = {}
 
 -- Generalized spawn configuration
-EntityFactory.SPAWN_CONFIG_MOUTH = {
+EntityFactory.spawnConfigs = {}
+local mouthConfig1 = {
     RADIUS = 500,           -- Area around camera to consider
-    MIN_DISTANCE = 100,      -- Minimum space between entities
+    MIN_DISTANCE = 10,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 10,       -- Max attempts to find valid position
     SPAWN_COOLDOWN = 20      -- Pixels camera must move before next spawn
 }
 
-EntityFactory.SPAWN_CONFIG_TURRET = {
+local buttConfig1 = {
     RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 450,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
@@ -24,6 +25,16 @@ EntityFactory.SPAWN_CONFIG_TURRET = {
     SPAWN_COOLDOWN = 200      -- Pixels camera must move before next spawn
 }
 
+local noseConfig1 = {
+    RADIUS = 500,           -- Area around camera to consider
+    MIN_DISTANCE = 450,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 200      -- Pixels camera must move before next spawn
+}
+table.insert(EntityFactory.spawnConfigs, mouthConfig1)
+table.insert(EntityFactory.spawnConfigs, buttConfig1)
+table.insert(EntityFactory.spawnConfigs, noseConfig1)
 -- State tracking
 EntityFactory.exploredChunks = {}
 EntityFactory.lastSpawnPositions = {
@@ -70,13 +81,9 @@ function EntityFactory:createTwinTurrets(x, y, radius)
 end
 
 -- Generalized procedural spawn function
-function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, spawnParams)
+function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, configNum, spawnParams)
     local config
-    if entityType == "mouth" then
-        config = self.SPAWN_CONFIG_MOUTH
-    elseif entityType == "butt" or entityType == "nose" then
-        config = self.SPAWN_CONFIG_TURRET
-    end
+    config = EntityFactory.spawnConfigs[configNum]
     -- Check spawn cooldown
     if self:distance(cameraX, cameraY, self.lastSpawnPositions[entityType].x, self.lastSpawnPositions[entityType].y) < config.SPAWN_COOLDOWN then
         return nil

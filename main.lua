@@ -81,7 +81,7 @@ function love.update(dt)
         camera.y = camera.y + (gumball.y - camera.y) * 0.1
     end
     
-    -- Update all entities
+    -- Update all entities=
     for _, entity in ipairs(entities) do
         if entity.type == "turret" then
             entity:update(dt, entities)
@@ -138,21 +138,21 @@ function love.update(dt)
     --     table.insert(entities, projectile)
     -- end
 
-    local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt")
+    local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2)
 
     if newButt then
         table.insert(entities, newButt[1])
         table.insert(entities, newButt[2])
     end
 
-    local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose")
+    local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose", 3)
 
     if newNose then
         table.insert(entities, newNose[1])
         table.insert(entities, newNose[2])
     end
     
-    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth")
+    local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
 
     if newMouth then
         table.insert(entities, newMouth)
