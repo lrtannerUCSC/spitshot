@@ -117,6 +117,7 @@ function Gumball:onCollision(other)
     end
     if other.type == "healingUpgrade" then
         self.health = self.health + 1
+        other.active = false
     end
 end
 

@@ -78,21 +78,6 @@ function Turret:draw()
 end
 
 function Turret:shoot(entities)
-    -- Calculate absolute world position accounting for:
-    -- 1. Rotation origin (originX/Y)
-    -- 2. Local offset (self.x/y)
-    -- 3. Rotation (self.direction)
-    -- 4. Exit point offset (radius * 0.3 in rear direction)
-    
-    -- First calculate the rotated local position
-    local rotatedX = self.x * math.cos(self.direction) - self.y * math.sin(self.direction)
-    local rotatedY = self.x * math.sin(self.direction) + self.y * math.cos(self.direction)
-    
-    -- Then add exit point offset (rear direction)
-    local exitOffsetX = math.cos(self.direction + math.pi) * (self.radius * 0.3)
-    local exitOffsetY = math.sin(self.direction + math.pi) * (self.radius * 0.3)
-    
-    
     -- Fire in the rear direction (opposite of facing)
     local projectile = Projectile:new(
         self.x,
@@ -107,7 +92,6 @@ function Turret:shoot(entities)
         self.projLifespan  -- lifespan
     )
     if projectile then 
-        print(entities)
         table.insert(entities, projectile)
     end
 end

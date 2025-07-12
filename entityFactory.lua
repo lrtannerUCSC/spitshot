@@ -3,7 +3,8 @@ local Entity = require("entity")
 local Mouth = require("mouth")
 local Gumball = require("gumball")
 local Projectile = require("projectile")
-local Turret = require("turret")  -- Make sure to require your Turret class
+local Turret = require("turret")
+local HealingUpgrade = require("healingUpgrade")
 
 local EntityFactory = {}
 
@@ -32,15 +33,26 @@ local noseConfig1 = {
     MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
     SPAWN_COOLDOWN = 200      -- Pixels camera must move before next spawn
 }
+
+local healingUpgradeConfig1 = {
+    RADIUS = 500,           -- Area around camera to consider
+    MIN_DISTANCE = 450,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 100      -- Pixels camera must move before next spawn
+}
+
 table.insert(EntityFactory.spawnConfigs, mouthConfig1)
 table.insert(EntityFactory.spawnConfigs, buttConfig1)
 table.insert(EntityFactory.spawnConfigs, noseConfig1)
+table.insert(EntityFactory.spawnConfigs, healingUpgradeConfig1)
 -- State tracking
 EntityFactory.exploredChunks = {}
 EntityFactory.lastSpawnPositions = {
     mouth = {x = 0, y = 0},
     butt = {x = 0, y = 0},
-    nose = {x = 0, y = 0}
+    nose = {x = 0, y = 0},
+    healingUpgrade = {x = 0, y = 0}
 }
 
 function EntityFactory:update(dt, entities, camera)
@@ -163,6 +175,9 @@ function EntityFactory:createTwinTurrets(x, y, radius, color, type, direction, r
     return {turret1, turret2}  -- Return both turrets as a pair
 end
 
+function EntityFactory:createHealingUpgrade(x, y, radius, color, health)
+    return HealingUpgrade:new(x, y, radius, color, "healingUpgrade", health)
+end
 -- Generalized procedural spawn function
 function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, configNum, spawnParams)
     local config
@@ -176,7 +191,7 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
     local chunk = self:getCurrentChunk(cameraX, cameraY, config)
     self.exploredChunks[chunk.x..","..chunk.y] = true
 
-    -- Try to find valid spawn positionspawnParams.projRadius, 
+    -- Try to find valid spawn positionspawnParams.projRadius,
     for i = 1, config.MAX_ATTEMPTS do
         local angle = math.random() * math.pi * 2
         local distance = config.RADIUS * (0.8 + math.random() * 0.4)
@@ -190,18 +205,20 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
             if entityType == "mouth" then
                 return self:createMouth(x, y, spawnParams.radius, spawnParams.color)
             elseif entityType == "butt" then
-                local turret1 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+                local turret1 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
             
-                local turret2 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+                local turret2 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
                 turret2.direction = math.pi
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "nose" then
-                local turret1 = self:createTurret(x-20, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+                local turret1 = self:createTurret(x-20, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
 
             
-                local turret2 = self:createTurret(x+20, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius, spawnParams.projLifespan)
+                local turret2 = self:createTurret(x+20, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
 
                 return {turret1, turret2}  -- Return both turrets as a pairs
+            elseif entityType == "healingUpgrade" then
+                return self:createHealingUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
             -- Add more entity types as needed
             end
         end

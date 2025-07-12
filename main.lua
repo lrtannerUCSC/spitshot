@@ -71,9 +71,9 @@ end
 
 function love.update(dt)
     --love.graphics.setFont(love.graphics.newFont(12))
-    -- if gumball.health <= 0 then
-    --     love.event.quit()
-    -- end
+    if gumball.health <= 0 then
+        love.event.quit()
+    end
     -- Update charging if mouse is held down
     if gumball.isCharging then
         gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * (love.timer.getTime() - gumball.chargeStartTime)), gumball.chargeMax)
@@ -179,6 +179,18 @@ function love.update(dt)
         table.insert(entities, newNose[2])
     end
     
+    local healingUpgradeSpawnParams = {
+        radius = 20,
+        color = {1, 1, 1},
+        type = "healingUpgrade",
+        health = 1
+    }
+
+    local newHealingUpgrade = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "healingUpgrade", 4, healingUpgradeSpawnParams)
+
+    if newHealingUpgrade then
+        table.insert(entities, newHealingUpgrade)
+    end
 
 
 end
@@ -213,7 +225,7 @@ function love.draw()
     -- Draw entity type labels with colors
     local y = 80
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Entity Types:", 10, y)
+    love.graphics.print("Health: " .. gumball.health, 10, y)
     y = y + 20
 end
 

@@ -29,7 +29,7 @@ function Upgrade:draw()
 end
 
 function Upgrade:onCollision(other)
-    self.active = false
+    -- self.active = false
 end
 
 return Upgrade
