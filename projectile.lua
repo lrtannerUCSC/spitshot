@@ -36,12 +36,6 @@ function Projectile:update(dt)
             self.active = false
         end
         
-        -- -- Optional: Deactivate if out of screen bounds
-        -- local margin = 100
-        -- if self.x < -margin or self.x > love.graphics.getWidth() + margin or
-        -- self.y < -margin or self.y > love.graphics.getHeight() + margin then
-        --     self.active = false
-        -- end
     end
 end
 
@@ -52,18 +46,6 @@ function Projectile:draw()
     love.graphics.setColor(self.color)
     love.graphics.circle("fill", self.x, self.y, self.radius)
     
-    -- -- Draw direction indicator
-    -- love.graphics.translate(self.x, self.y)
-    -- love.graphics.rotate(self.direction + math.pi/2)  -- Point in movement direction
-    
-    -- local indicator_width = self.radius/4
-    -- local indicator_length = self.radius*2
-    -- love.graphics.rectangle("fill", 
-    --     -indicator_width/2, 
-    --     -indicator_length, 
-    --     indicator_width, 
-    --     indicator_length)
-    
     love.graphics.pop()
 end
 
@@ -71,7 +53,6 @@ function Projectile:checkCollision(other)
 end
 
 function Projectile:onCollision(other)
-
 end
 
 return Projectile

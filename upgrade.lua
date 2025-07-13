@@ -15,7 +15,6 @@ function Upgrade:new(x, y, radius, color, type)
 end
 
 function Upgrade:update(dt)
-
 end
 
 function Upgrade:draw()
@@ -29,7 +28,6 @@ function Upgrade:draw()
 end
 
 function Upgrade:onCollision(other)
-    -- self.active = false
 end
 
 return Upgrade

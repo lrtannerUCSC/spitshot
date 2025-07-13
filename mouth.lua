@@ -13,8 +13,18 @@ function Mouth:new(x, y, radius, color, type)
 
     -- Mouth-specific properties
     instance.type = type or "mouth"
+    instance.currentGumball = nil
 
     return instance
 end
 
+function Mouth:update(dt)
+    self.currentGumball = nil
+end
+
+function Mouth:onCollision(other)
+    if other.type == "gumball" then
+        self.currentGumball = other.id
+    end
+end
 return Mouth

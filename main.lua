@@ -6,6 +6,7 @@ local EntityFactory = require("entityFactory")
 local entities = {}
 local gumball = nil
 local spawnParameters = {}
+local totalPoints = 0
 
 -- Camera system
 local camera = {
@@ -70,10 +71,18 @@ function love.load()
         health = 1
     }
 
+    local duplicationUpgradeSpawnParams = {
+        radius = 20,
+        color = {1, 1, 1},
+        type = "duplicationUpgrade",
+        count = 1
+    }
+
     table.insert(spawnParameters, mouthSpawnParams)
     table.insert(spawnParameters, buttSpawnParams)
     table.insert(spawnParameters, noseSpawnParams)
     table.insert(spawnParameters, healingUpgradeSpawnParams)
+    table.insert(spawnParameters, duplicationUpgradeSpawnParams)
 end
 
 
@@ -94,7 +103,7 @@ function love.update(dt)
     EntityFactory:update(dt, entities, camera)
 
     -- Procedural generation for entities
-    generateEntities(true, true, true, true)
+    generateEntities(true, true, true, true, true)
 end
 
 function love.draw()
@@ -135,21 +144,28 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 1 then  -- Left mouse button
-        if gumball then
-            gumball:chargeStart()
+        for _, entity in ipairs(entities) do
+            if entity.type == "gumball" then
+                entity:chargeStart()
+            end
         end
     end
+
     if button == 2 then  -- Right mouse button
-        if gumball then
-            gumball:changeDirection()
+        for _, entity in ipairs(entities) do
+            if entity.type == "gumball" then
+                entity:changeDirection()
+            end
         end
     end
 end
 
 function love.mousereleased(x, y, button)
     if button == 1 and gumball and gumball.isCharging then
-        if gumball then
-            gumball:releaseCharge()
+        for _, entity in ipairs(entities) do
+            if entity.type == "gumball" then
+                entity:releaseCharge()
+            end
         end
         
     end
@@ -188,7 +204,7 @@ end
 function updateEntities(dt)
     for _, entity in ipairs(entities) do
         entity:update(dt, entities, camera)
-
+        -- updatePoints(entity)
         local marginX = 50
         local marginY = love.graphics.getHeight() / camera.minScale
         entityBoundaryCheck(entity, marginX, marginY)
@@ -231,7 +247,12 @@ function checkCollisions(entities)
         for j, entity2 in ipairs(entities) do
             if i ~= j then
                 if entity1:checkCollision(entity2) then
-                    entity1:onCollision(entity2)
+                    if entity1.type == "gumball" then
+                        entity1:onCollision(entity2, entities)
+                    else
+                        entity1:onCollision(entity2)
+                    end
+                    
                 end
             end
         end
@@ -246,7 +267,7 @@ function removeInactiveEntities(entities)
     end
 end
 
-function generateEntities(mouths, butts, noses, healing)
+function generateEntities(mouths, butts, noses, healing, duplicating)
     if mouths then
         local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1, spawnParameters[1])
         if newMouth then
@@ -277,7 +298,15 @@ function generateEntities(mouths, butts, noses, healing)
             table.insert(entities, newHealingUpgrade)
         end
     end
+
+    if duplicating then
+        local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "duplicationUpgrade", 5, spawnParameters[5])
+        if newMouth then
+            table.insert(entities, newMouth)
+        end
+    end
 end
+
 
 
 -- HUD
@@ -289,7 +318,11 @@ function drawHud()
     -- Draw entity type labels with colors
     local y = 80
     love.graphics.setColor(1, 1, 1)
-    if gumball then
-        love.graphics.print("Health: " .. gumball.health, 10, y)
+    love.graphics.print("Total Points: " .. totalPoints, 10, y)
+end
+
+function updatePoints(entity)
+    if entity.type == "gumball" then
+        totalPoints = totalPoints + entity.points
     end
 end

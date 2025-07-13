@@ -38,6 +38,10 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.chargeStartTime = 0   -- When charging started
     instance.chargeMult = 5
 
+    -- Duplication properties
+    instance.duplicationCooldown = 0.5
+    instance.duplicationTimer = 0.5
+
     -- Score properties
     instance.visitedMouths = {}
     instance.points = 0
@@ -52,7 +56,7 @@ function Gumball:new(x, y, radius, speed, color, type)
 end
 
 function Gumball:update(dt, entities, camera)
-    self:healthCheck()
+    self:healthCheck(entities)
     
     if self.isCharging then
         self:chargeCheck()
@@ -62,6 +66,9 @@ function Gumball:update(dt, entities, camera)
     if self.flag then
         self:move(dt, camera)
     end
+
+    self.duplicationTimer = self.duplicationTimer - dt
+
     if self.iFrameTimer > 0 then
         self.iFrameTimer = self.iFrameTimer - dt
     else
@@ -151,7 +158,7 @@ function Gumball:checkCollision(other)
            math.abs(self.y - other.y) < (other.radius)
 end
 
-function Gumball:onCollision(other)
+function Gumball:onCollision(other, entities)
     if other.type == "mouth" and other.id ~= self.currentMouth then
         self.x = other.x
         self.y = other.y
@@ -183,10 +190,28 @@ function Gumball:onCollision(other)
         self.health = self.health + 1
         other.active = false
     end
+    if other.type == "duplicationUpgrade" then
+        other.active = false
+        if self.duplicationTimer <= 0 then
+            self.duplicationTimer = self.duplicationCooldown
+            local gumballJr = Gumball:new(self.x, self.y, self.radius, self.baseSpeed, self.color, self.type)
+            print("new gumball")
+            table.insert(entities, gumballJr)
+        end
+    end
 end
 
-function Gumball:healthCheck()
+function Gumball:healthCheck(entities)
     if self.health <= 0 then
+        self.active = false
+    end
+    local continue = false
+    for _, entity in ipairs(entities) do
+        if entity.type == "gumball" then
+            continue = true
+        end
+    end
+    if not continue then
         love.event.quit()
     end
 end

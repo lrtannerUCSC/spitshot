@@ -5,6 +5,7 @@ local Gumball = require("gumball")
 local Projectile = require("projectile")
 local Turret = require("turret")
 local HealingUpgrade = require("healingUpgrade")
+local DuplicationUpgrade = require("duplicationUpgrade")
 
 local EntityFactory = {}
 
@@ -42,17 +43,28 @@ local healingUpgradeConfig1 = {
     SPAWN_COOLDOWN = 100      -- Pixels camera must move before next spawn
 }
 
+local duplicationUpgradeConfig1 = {
+    RADIUS = 500,           -- Area around camera to consider
+    MIN_DISTANCE = 450,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 100      -- Pixels camera must move before next spawn
+}
+
+
 table.insert(EntityFactory.spawnConfigs, mouthConfig1)
 table.insert(EntityFactory.spawnConfigs, buttConfig1)
 table.insert(EntityFactory.spawnConfigs, noseConfig1)
 table.insert(EntityFactory.spawnConfigs, healingUpgradeConfig1)
+table.insert(EntityFactory.spawnConfigs, duplicationUpgradeConfig1)
 -- State tracking
 EntityFactory.exploredChunks = {}
 EntityFactory.lastSpawnPositions = {
     mouth = {x = 0, y = 0},
     butt = {x = 0, y = 0},
     nose = {x = 0, y = 0},
-    healingUpgrade = {x = 0, y = 0}
+    healingUpgrade = {x = 0, y = 0},
+    duplicationUpgrade = {x = 0, y = 0},
 }
 
 function EntityFactory:update(dt, entities, camera)
@@ -200,6 +212,11 @@ end
 function EntityFactory:createHealingUpgrade(x, y, radius, color, health)
     return HealingUpgrade:new(x, y, radius, color, "healingUpgrade", health)
 end
+
+function EntityFactory:createDuplicationUpgrade(x, y, radius, color, count)
+    return DuplicationUpgrade:new(x, y, radius, color, "duplicationUpgrade", count)
+end
+
 -- Generalized procedural spawn function
 function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, configNum, spawnParams)
     local config
@@ -241,6 +258,9 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "healingUpgrade" then
                 return self:createHealingUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
+            elseif entityType == "duplicationUpgrade" then
+                print("foo")
+                return self:createDuplicationUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
             -- Add more entity types as needed
             end
         end

@@ -12,14 +12,15 @@ function Turret:new(x, y, radius, color, type, direction, rotationSpeed, shotSpe
     local instance = Entity:new(x, y, radius, 0, color, type)
     setmetatable(instance, self)
 
-    instance.radius = radius
-    instance.color = color
     instance.type = type or "turret"
+
     instance.direction = direction or 0  -- Now in radians (0 = right)
     instance.rotationSpeed = math.rad(rotationSpeed) or math.rad(60)
+
     instance.shotSpeed = shotSpeed
     instance.cooldown = fireRate
     instance.timer = fireRate
+    
     instance.projectiles = {}
     instance.projRadius = projRadius
     instance.projLifespan = projLifespan
@@ -94,11 +95,6 @@ function Turret:shoot(entities)
     if projectile then 
         table.insert(entities, projectile)
     end
-end
-
-function Turret:checkCollision(other)
-    return math.abs(self.x - other.x) < (other.radius) and
-           math.abs(self.y - other.y) < (other.radius)
 end
 
 function Turret:onCollision(other)
