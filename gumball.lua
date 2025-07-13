@@ -195,7 +195,6 @@ function Gumball:onCollision(other, entities)
         if self.duplicationTimer <= 0 then
             self.duplicationTimer = self.duplicationCooldown
             local gumballJr = Gumball:new(self.x, self.y, self.radius, self.baseSpeed, self.color, self.type)
-            print("new gumball")
             table.insert(entities, gumballJr)
         end
     end

@@ -259,7 +259,6 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
             elseif entityType == "healingUpgrade" then
                 return self:createHealingUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
             elseif entityType == "duplicationUpgrade" then
-                print("foo")
                 return self:createDuplicationUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
             -- Add more entity types as needed
             end
