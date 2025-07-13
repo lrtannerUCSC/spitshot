@@ -206,7 +206,7 @@ function Gumball:healthCheck(entities)
     end
     local continue = false
     for _, entity in ipairs(entities) do
-        if entity.type == "gumball" then
+        if entity.type == "gumball" and entity.active then
             continue = true
         end
     end

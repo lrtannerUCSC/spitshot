@@ -16,7 +16,15 @@ local camera = {
     minScale = 0.5,
     maxScale = 2,
     panSpeed = 50,
-    target = nil
+    target = nil,
+    -- New properties for random panning
+    currentDirection = nil,
+    directionTimer = 0,
+    directionChangeInterval = 60,  -- seconds between direction changes
+    directions = {
+        "up", "down", "left", "right",
+        "up-left", "up-right", "down-left", "down-right"
+    }
 }
 
 function love.load()
@@ -103,7 +111,7 @@ function love.update(dt)
     EntityFactory:update(dt, entities, camera)
 
     -- Procedural generation for entities
-    generateEntities(true, true, true, true, true)
+    generateEntities(true, true, true, true, false)
 end
 
 function love.draw()
@@ -187,8 +195,55 @@ function camera:clear()
 end
 
 function camera:scroll(dt)
-    camera.y = camera.y + dt * camera.panSpeed
+    if not self.currentDirection then
+        self:chooseRandomDirection()
+    end
+    
+    -- Update timer
+    self.directionTimer = self.directionTimer + dt
+    
+    -- Check if it's time to change direction
+    if self.directionTimer >= self.directionChangeInterval then
+        self:chooseRandomDirection()
+    end
+    
+    -- Move based on current direction
+    local speed = self.panSpeed * dt
+    if self.currentDirection == "up" then
+        self.y = self.y - speed
+    elseif self.currentDirection == "down" then
+        self.y = self.y + speed
+    elseif self.currentDirection == "left" then
+        self.x = self.x - speed
+    elseif self.currentDirection == "right" then
+        self.x = self.x + speed
+    elseif self.currentDirection == "up-left" then
+        self.x = self.x - speed * 0.707  -- 1/sqrt(2) for diagonal
+        self.y = self.y - speed * 0.707
+    elseif self.currentDirection == "up-right" then
+        self.x = self.x + speed * 0.707
+        self.y = self.y - speed * 0.707
+    elseif self.currentDirection == "down-left" then
+        self.x = self.x - speed * 0.707
+        self.y = self.y + speed * 0.707
+    elseif self.currentDirection == "down-right" then
+        self.x = self.x + speed * 0.707
+        self.y = self.y + speed * 0.707
+    end
 end
+
+function camera:chooseRandomDirection()
+    -- Get a random index from the directions table
+    local randomIndex = math.random(1, #self.directions)
+    self.currentDirection = self.directions[randomIndex]
+    
+    -- Randomize the next interval (between 2-5 seconds)
+    self.directionChangeInterval = math.random(30,60)
+    self.directionTimer = 0
+    
+    print("New camera direction: " .. self.currentDirection)
+end
+
 function love.wheelmoved(x, y)
     -- Zoom in/out with mouse wheel
     if y > 0 then
@@ -204,7 +259,7 @@ end
 function updateEntities(dt)
     for _, entity in ipairs(entities) do
         entity:update(dt, entities, camera)
-        -- updatePoints(entity)
+        -- updatePoints(entity) 
         local marginX = 50
         local marginY = love.graphics.getHeight() / camera.minScale
         entityBoundaryCheck(entity, marginX, marginY)
