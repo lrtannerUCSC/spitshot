@@ -52,7 +52,7 @@ end
 
 
 function Entity:onCollision(other)
-    -- Base collision behavior
+    print("entity has no collision logic: " .. self.id)
 end
 
 function Entity:getInfo()

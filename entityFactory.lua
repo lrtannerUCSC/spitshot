@@ -69,7 +69,7 @@ function EntityFactory:update(dt, entities, camera)
         
         radius = 25,
         speed = 65,            -- projectile speed
-        color = {1, 0, 1},
+        color = {0.5, 0.3, 0.8},
         type = "projectile",
         lifespan = 60,
     }
@@ -87,7 +87,7 @@ function EntityFactory:update(dt, entities, camera)
         
         radius = 45,
         speed = 55,            -- projectile speed
-        color = {1, 0, 1},
+        color = {0.5, 0.3, 0.8},
         type = "projectile",
         lifespan = 60,
     }
@@ -117,7 +117,7 @@ function EntityFactory:spawnProjectileWall(dt, camera, params)
 
         radius = 25,
         speed = 30,            -- projectile speed
-        color = {1, 0, 1},
+        color = {0.5, 0.3, 0.8},
         type = "projectile",
         lifespan = 15,
     }

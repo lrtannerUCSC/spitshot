@@ -11,31 +11,53 @@ function Gumball:new(x, y, radius, speed, color, type)
     local instance = Entity:new(x, y, radius, speed, color, type)
     setmetatable(instance, self)
 
+    -- Gumball-specific properties
     instance.type = type or "gumball"
-    instance.health = 3
-    instance.direction = 0  -- Now in radians (0 = right)
-    instance.rotationSpeed = math.rad(90)
-    instance.flag = false
-    instance.movementDirection = instance.direction
-    instance.currentMouth = nil
     instance.baseSpeed = speed       -- Base movement speed
+    instance.baseColor = color or {1.0, 0.8, 0.8}
+    instance.damageColor = {1.0, 0.2, 0.2}
+    instance.health = 3
+
+    instance.currentMouth = nil -- The current mouth the gumball is in
+
+    -- Movement properties
+    instance.flag = false -- Whether the gumball is currently moving
+    instance.direction = 0  -- Now in radians (0 = right)
+    instance.movementDirection = instance.direction
+    instance.directionDirection = 1 -- 1 = clockwise, -1 = counterclockwise
+
+    -- Rotation properties
+    instance.rotationSpeed = math.rad(90)
     instance.baseRotation = math.rad(90)      -- Base rotation speed (radians/sec)
+
+    -- Charge properties
     instance.chargeMax = 15.0       -- Maximum charge multiplier
     instance.chargeRate = 5      -- Charge rate per second
     instance.currentCharge = 1.0   -- Current charge multiplier (starts at 1x)
     instance.isCharging = false    -- Whether we're currently charging
     instance.chargeStartTime = 0   -- When charging started
+    instance.chargeMult = 5
+
+    -- Score properties
     instance.visitedMouths = {}
     instance.points = 0
     instance.pointMult = 1
+   
+    -- I-frames
     instance.iFrames = 0.8
     instance.iFrameTimer = 0.5
-    instance.directionDirection = 1
+    
 
     return instance
 end
 
 function Gumball:update(dt, entities, camera)
+    self:healthCheck()
+    
+    if self.isCharging then
+        self:chargeCheck()
+    end
+
     self.direction = (self.direction + dt * self.directionDirection * self.rotationSpeed) % (2 * math.pi)
     if self.flag then
         self:move(dt, camera)
@@ -43,7 +65,7 @@ function Gumball:update(dt, entities, camera)
     if self.iFrameTimer > 0 then
         self.iFrameTimer = self.iFrameTimer - dt
     else
-        self.color = {0.3, 1, 0.3}
+        self.color = self.baseColor
     end
     
 end
@@ -91,7 +113,6 @@ function Gumball:move(dt, camera)
         bounced = true
     end
     
-    -- Apply slight damping when bouncing to reduce jitter
     if bounced then
         self.speed = self.speed * 0.95  -- Reduce speed slightly on bounce
     end
@@ -153,7 +174,7 @@ function Gumball:onCollision(other)
         if self.flag then
             if self.iFrameTimer <= 0 then
                 self.iFrameTimer = self.iFrames
-                self.color = {1, 0, 0}
+                self.color = self.damageColor
                 self.health = self.health - 1
             end
         end
@@ -164,5 +185,38 @@ function Gumball:onCollision(other)
     end
 end
 
+function Gumball:healthCheck()
+    if self.health <= 0 then
+        love.event.quit()
+    end
+end
+
+function Gumball:chargeCheck()
+    self.currentCharge = math.min(1.0 + (self.chargeRate * (love.timer.getTime() - self.chargeStartTime)), self.chargeMax)
+    self.rotationSpeed = self.baseRotation * self.currentCharge
+end
+
+function Gumball:chargeStart()
+    self.isCharging = true
+    self.chargeStartTime = love.timer.getTime()
+    self.currentCharge = 1.0  -- Reset charge when starting new press
+end
+
+function Gumball:releaseCharge()
+    local chargeTime = love.timer.getTime() - self.chargeStartTime
+    -- Calculate charge multiplier (capped at chargeMax)
+    self.currentCharge = math.min(1.0 + (self.chargeRate * chargeTime), self.chargeMax)
+        
+
+    self.isCharging = false
+    self.flag = true
+    self.movementDirection = self.direction
+    self.speed = self.baseSpeed * self.currentCharge/self.chargeMult
+    self.rotationSpeed = self.baseRotation
+end
+
+function Gumball:changeDirection()
+    self.directionDirection = self.directionDirection * -1
+end
 
 return Gumball
