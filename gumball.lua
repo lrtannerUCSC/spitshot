@@ -35,10 +35,10 @@ function Gumball:new(x, y, radius, speed, color, type)
     return instance
 end
 
-function Gumball:update(dt)
+function Gumball:update(dt, entities, camera)
     self.direction = (self.direction + dt * self.directionDirection * self.rotationSpeed) % (2 * math.pi)
     if self.flag then
-        self:move(dt)
+        self:move(dt, camera)
     end
     if self.iFrameTimer > 0 then
         self.iFrameTimer = self.iFrameTimer - dt
@@ -48,11 +48,54 @@ function Gumball:update(dt)
     
 end
 
-function Gumball:move(dt)
+function Gumball:move(dt, camera)
+    -- Calculate screen boundaries relative to camera
+    local screenLeft = camera.x - love.graphics.getWidth()/(2*camera.scale)
+    local screenRight = camera.x + love.graphics.getWidth()/(2*camera.scale)
+    local screenTop = camera.y - love.graphics.getHeight()/(2*camera.scale)
+    local screenBottom = camera.y + love.graphics.getHeight()/(2*camera.scale)
+    
+    -- Calculate movement
     local dx = math.cos(self.movementDirection) * self.speed * dt
     local dy = math.sin(self.movementDirection) * self.speed * dt
+    
+    -- Store previous position for collision recovery
+    local prevX, prevY = self.x, self.y
+    
+    -- Apply movement
     self.x = self.x + dx
     self.y = self.y + dy
+    
+    -- Boundary checks with better collision response
+    local bounced = false
+    
+    -- Left/Right boundary check
+    if self.x - self.radius < screenLeft then
+        self.x = screenLeft + self.radius
+        self.movementDirection = math.pi - self.movementDirection
+        bounced = true
+    elseif self.x + self.radius > screenRight then
+        self.x = screenRight - self.radius
+        self.movementDirection = math.pi - self.movementDirection
+        bounced = true
+    end
+    
+    -- Top/Bottom boundary check (accounts for camera panning)
+    if self.y - self.radius < screenTop then
+        self.y = screenTop + self.radius
+        self.movementDirection = -self.movementDirection
+        bounced = true
+    elseif self.y + self.radius > screenBottom then
+        self.y = screenBottom - self.radius
+        self.movementDirection = -self.movementDirection
+        bounced = true
+    end
+    
+    -- Apply slight damping when bouncing to reduce jitter
+    if bounced then
+        self.speed = self.speed * 0.95  -- Reduce speed slightly on bounce
+    end
+    
 end
 
 function Gumball:draw()

@@ -74,6 +74,7 @@ function love.update(dt)
     if gumball.health <= 0 then
         love.event.quit()
     end
+
     -- Update charging if mouse is held down
     if gumball.isCharging then
         gumball.currentCharge = math.min(1.0 + (gumball.chargeRate * (love.timer.getTime() - gumball.chargeStartTime)), gumball.chargeMax)
@@ -88,11 +89,7 @@ function love.update(dt)
     camera.y = camera.y + dt * 50
     -- Update all entities=
     for _, entity in ipairs(entities) do
-        if entity.type == "butt" or entity.type == "nose"  or entity.type == "turret" then
-            entity:update(dt, entities)
-        else
-            entity:update(dt)
-        end
+        entity:update(dt, entities, camera)
         --love.graphics.setFont(love.graphics.newFont(12))
 
         local marginX = 50
