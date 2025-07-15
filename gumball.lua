@@ -14,6 +14,7 @@ function Gumball:new(x, y, radius, speed, color, type)
     -- Gumball-specific properties
     instance.type = type or "gumball"
     instance.baseSpeed = speed       -- Base movement speed
+    instance.speedPointMult = 0.1
     instance.baseColor = color or {1.0, 0.8, 0.8}
     instance.damageColor = {1.0, 0.2, 0.2}
     instance.health = 3
@@ -29,9 +30,12 @@ function Gumball:new(x, y, radius, speed, color, type)
     -- Rotation properties
     instance.rotationSpeed = math.rad(90)
     instance.baseRotation = math.rad(90)      -- Base rotation speed (radians/sec)
+    instance.currentRotationSpeed = instance.rotationSpeed
+    instance.rotationPointMult = 0.5
 
     -- Charge properties
     instance.chargeMax = 9.0       -- Maximum charge multiplier
+    instance.chargeMin = 1.0       -- Minimum charge multiplier
     instance.chargeRate = 3      -- Charge rate per second
     instance.currentCharge = 1.0   -- Current charge multiplier (starts at 1x)
     instance.isCharging = false    -- Whether we're currently charging
@@ -44,7 +48,7 @@ function Gumball:new(x, y, radius, speed, color, type)
 
     -- Score properties
     instance.visitedMouths = {}
-    instance.points = 0
+    instance.points = 1000
     instance.pointMult = 1
    
     -- I-frames
@@ -57,7 +61,9 @@ end
 
 function Gumball:update(dt, entities, camera)
     self:healthCheck(entities)
-    self.rotationSpeed = self.baseRotation + math.rad(self.points)
+    self.rotationSpeed = self.baseRotation + math.rad(self.points * self.rotationPointMult)
+    self.currentRotationSpeed = self.rotationSpeed
+    self.speed = self.baseSpeed + self.points * self.speedPointMult
     if self.isCharging then
         self:chargeCheck()
     end
@@ -231,19 +237,19 @@ end
 
 function Gumball:chargeCheck()
     self.currentCharge = math.min(1.0 + (self.chargeRate * (love.timer.getTime() - self.chargeStartTime)), self.chargeMax)
-    self.rotationSpeed = self.baseRotation * self.currentCharge
+    self.rotationSpeed = self.currentRotationSpeed * self.currentCharge
 end
 
 function Gumball:chargeStart()
     self.isCharging = true
     self.chargeStartTime = love.timer.getTime()
-    self.currentCharge = 1.0  -- Reset charge when starting new press
+    self.currentCharge = self.chargeMin  -- Reset charge when starting new press
 end
 
 function Gumball:cancelCharge()
     self.isCharging = false
     self.chargeStartTime = 0
-    self.currentCharge = 1.0  -- Reset charge when starting new press
+    self.currentCharge = self.chargeMin  -- Reset charge when starting new press
 end
 
 function Gumball:releaseCharge()
