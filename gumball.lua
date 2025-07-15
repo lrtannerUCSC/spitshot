@@ -31,8 +31,8 @@ function Gumball:new(x, y, radius, speed, color, type)
     instance.baseRotation = math.rad(90)      -- Base rotation speed (radians/sec)
 
     -- Charge properties
-    instance.chargeMax = 15.0       -- Maximum charge multiplier
-    instance.chargeRate = 5      -- Charge rate per second
+    instance.chargeMax = 9.0       -- Maximum charge multiplier
+    instance.chargeRate = 3      -- Charge rate per second
     instance.currentCharge = 1.0   -- Current charge multiplier (starts at 1x)
     instance.isCharging = false    -- Whether we're currently charging
     instance.chargeStartTime = 0   -- When charging started
@@ -57,7 +57,7 @@ end
 
 function Gumball:update(dt, entities, camera)
     self:healthCheck(entities)
-    
+    self.rotationSpeed = self.baseRotation + math.rad(self.points)
     if self.isCharging then
         self:chargeCheck()
     end
@@ -198,6 +198,20 @@ function Gumball:onCollision(other, entities)
             table.insert(entities, gumballJr)
         end
     end
+    if other.type == "nukeUpgrade" then
+        local pointTracker = 0
+        for _, entity in ipairs(entities) do
+            if entity.type == "projectile" then
+                pointTracker = pointTracker + 1
+                if pointTracker >= 5 then
+                    pointTracker = 0
+                    self.points = self.points + 1
+                end
+                entity.active = false
+            end
+        end
+        other.active = false
+    end
 end
 
 function Gumball:healthCheck(entities)
@@ -223,6 +237,12 @@ end
 function Gumball:chargeStart()
     self.isCharging = true
     self.chargeStartTime = love.timer.getTime()
+    self.currentCharge = 1.0  -- Reset charge when starting new press
+end
+
+function Gumball:cancelCharge()
+    self.isCharging = false
+    self.chargeStartTime = 0
     self.currentCharge = 1.0  -- Reset charge when starting new press
 end
 

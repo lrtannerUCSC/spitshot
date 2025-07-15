@@ -41,56 +41,6 @@ function love.load()
     -- Initialize camera position
     camera.x = originX
     camera.y = originY
-
-    local mouthSpawnParams = {
-        radius = 20,
-        color = {0.9, 0.2, 0.5},
-        type = "mouth"
-    }
-
-    local buttSpawnParams = {
-        radius = 10,
-        color = {0.9, 0.7, 0.1},
-        type = "butt",
-        direction = 0,
-        rotationSpeed = 60,
-        shotSpeed = 30,
-        fireRate = 1,
-        projRadius = 5,
-        projLifespan = 15
-    }
-
-    local noseSpawnParams = {
-        radius = 15,
-        color = {0.8, 0.95, 0.7},
-        type = "nose",
-        direction = 0,
-        rotationSpeed = 90,
-        shotSpeed = 20,
-        fireRate = .75,
-        projRadius = 7.5,
-        projLifespan = 15
-    }
-
-    local healingUpgradeSpawnParams = {
-        radius = 20,
-        color = {0.2, 0.8, 0.4},
-        type = "healingUpgrade",
-        health = 1
-    }
-
-    local duplicationUpgradeSpawnParams = {
-        radius = 20,
-        color = {1, 1, 1},
-        type = "duplicationUpgrade",
-        count = 1
-    }
-
-    table.insert(spawnParameters, mouthSpawnParams)
-    table.insert(spawnParameters, buttSpawnParams)
-    table.insert(spawnParameters, noseSpawnParams)
-    table.insert(spawnParameters, healingUpgradeSpawnParams)
-    table.insert(spawnParameters, duplicationUpgradeSpawnParams)
 end
 
 
@@ -111,7 +61,7 @@ function love.update(dt)
     EntityFactory:update(dt, entities, camera)
 
     -- Procedural generation for entities
-    generateEntities(true, true, true, true, false)
+    generateEntities(true, true, true, true, false, true)
 end
 
 function love.draw()
@@ -143,6 +93,13 @@ function love.keypressed(key)
         local proj = EntityFactory:createRandomProjectile(25, love.graphics.getWidth(), love.graphics.getHeight(), camera.x, camera.y)
         table.insert(entities, proj)
         
+    end
+    if key == "e" or "E" then
+        for _, entity in ipairs(entities) do
+            if entity.type == "gumball" then
+                entity:cancelCharge()
+            end
+        end
     end
 end
 
@@ -322,9 +279,9 @@ function removeInactiveEntities(entities)
     end
 end
 
-function generateEntities(mouths, butts, noses, healing, duplicating)
+function generateEntities(mouths, butts, noses, healing, duplicating, nuking)
     if mouths then
-        local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1, spawnParameters[1])
+        local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "mouth", 1)
         if newMouth then
             table.insert(entities, newMouth)
         end
@@ -332,7 +289,7 @@ function generateEntities(mouths, butts, noses, healing, duplicating)
     
 
     if butts then
-        local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2, spawnParameters[2])
+        local newButt = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "butt", 2)
         if newButt then
             table.insert(entities, newButt[1])
             table.insert(entities, newButt[2])
@@ -340,7 +297,7 @@ function generateEntities(mouths, butts, noses, healing, duplicating)
     end
     
     if noses then
-        local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose", 3, spawnParameters[3])
+        local newNose = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nose", 3)
         if newNose then
             table.insert(entities, newNose[1])
             table.insert(entities, newNose[2])
@@ -348,16 +305,23 @@ function generateEntities(mouths, butts, noses, healing, duplicating)
     end
     
     if healing then
-        local newHealingUpgrade = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "healingUpgrade", 4, spawnParameters[4])
+        local newHealingUpgrade = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "healingUpgrade", 4)
         if newHealingUpgrade then
             table.insert(entities, newHealingUpgrade)
         end
     end
 
     if duplicating then
-        local newMouth = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "duplicationUpgrade", 5, spawnParameters[5])
-        if newMouth then
-            table.insert(entities, newMouth)
+        local newDuplicationUpgrade = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "duplicationUpgrade", 5)
+        if newDuplicationUpgrade then
+            table.insert(entities, newDuplicationUpgrade)
+        end
+    end
+
+    if nuking then
+        local newNukeUpgrade = EntityFactory:attemptProceduralSpawn(camera.x, camera.y, entities, "nukeUpgrade", 6)
+        if newNukeUpgrade then
+            table.insert(entities, newNukeUpgrade)
         end
     end
 end
@@ -373,7 +337,7 @@ function drawHud()
     -- Draw entity type labels with colors
     local y = 80
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Total Points: " .. totalPoints, 10, y)
+    love.graphics.print("Health: " .. gumball.health, 10, y)
 end
 
 function updatePoints(entity)

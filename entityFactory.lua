@@ -6,13 +6,21 @@ local Projectile = require("projectile")
 local Turret = require("turret")
 local HealingUpgrade = require("healingUpgrade")
 local DuplicationUpgrade = require("duplicationUpgrade")
+local NukeUpgrade = require("nukeUpgrade")
 
 local EntityFactory = {}
 
+GRID_SIZE = 500
 -- Generalized spawn configuration
 EntityFactory.spawnConfigs = {}
 local mouthConfig1 = {
-    RADIUS = 500,           -- Area around camera to consider
+    -- Entity Gen
+    radius = 20,
+    color = {0.9, 0.2, 0.5},
+    type = "mouth",
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 10,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 10,       -- Max attempts to find valid position
@@ -20,7 +28,19 @@ local mouthConfig1 = {
 }
 
 local buttConfig1 = {
-    RADIUS = 500,           -- Area around camera to consider
+    -- Entity Gen
+    radius = 10,
+    color = {0.9, 0.7, 0.1},
+    type = "butt",
+    direction = 0,
+    rotationSpeed = 60,
+    shotSpeed = 30,
+    fireRate = 1,
+    projRadius = 5,
+    projLifespan = 15,
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 450,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
@@ -28,7 +48,19 @@ local buttConfig1 = {
 }
 
 local noseConfig1 = {
-    RADIUS = 500,           -- Area around camera to consider
+    -- Entity Gen
+    radius = 15,
+    color = {0.8, 0.95, 0.7},
+    type = "nose",
+    direction = 0,
+    rotationSpeed = 90,
+    shotSpeed = 20,
+    fireRate = .75,
+    projRadius = 7.5,
+    projLifespan = 15,
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 450,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
@@ -36,7 +68,14 @@ local noseConfig1 = {
 }
 
 local healingUpgradeConfig1 = {
-    RADIUS = 500,           -- Area around camera to consider
+    -- Entity Gen
+    radius = 20,
+    color = {0.2, 0.8, 0.4},
+    type = "healingUpgrade",
+    health = 1,
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 450,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
@@ -44,19 +83,41 @@ local healingUpgradeConfig1 = {
 }
 
 local duplicationUpgradeConfig1 = {
-    RADIUS = 500,           -- Area around camera to consider
+    -- Entity Gen
+    radius = 20,
+    color = {1, 1, 1},
+    type = "duplicationUpgrade",
+    count = 1,
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
     MIN_DISTANCE = 450,      -- Minimum space between entities
     GRID_SIZE = 500,         -- Exploration grid chunk size
     MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
     SPAWN_COOLDOWN = 100      -- Pixels camera must move before next spawn
 }
 
+local nukeUpgradeConfig1 = {
+    -- Entity Gen
+    radius = 20,
+    color = {1, 1, 1},
+    type = "nukeUpgrade",
+    count = 1,
+
+    -- Proc Gen
+    GEN_RADIUS = 500,           -- Area around camera to consider
+    MIN_DISTANCE = 450,      -- Minimum space between entities
+    GRID_SIZE = 500,         -- Exploration grid chunk size
+    MAX_ATTEMPTS = 20,       -- Max attempts to find valid position
+    SPAWN_COOLDOWN = 500      -- Pixels camera must move before next spawn
+}
 
 table.insert(EntityFactory.spawnConfigs, mouthConfig1)
 table.insert(EntityFactory.spawnConfigs, buttConfig1)
 table.insert(EntityFactory.spawnConfigs, noseConfig1)
 table.insert(EntityFactory.spawnConfigs, healingUpgradeConfig1)
 table.insert(EntityFactory.spawnConfigs, duplicationUpgradeConfig1)
+table.insert(EntityFactory.spawnConfigs, nukeUpgradeConfig1)
 -- State tracking
 EntityFactory.exploredChunks = {}
 EntityFactory.lastSpawnPositions = {
@@ -65,6 +126,7 @@ EntityFactory.lastSpawnPositions = {
     nose = {x = 0, y = 0},
     healingUpgrade = {x = 0, y = 0},
     duplicationUpgrade = {x = 0, y = 0},
+    nukeUpgrade = {x = 0, y = 0},
 }
 
 function EntityFactory:update(dt, entities, camera)
@@ -217,8 +279,12 @@ function EntityFactory:createDuplicationUpgrade(x, y, radius, color, count)
     return DuplicationUpgrade:new(x, y, radius, color, "duplicationUpgrade", count)
 end
 
+function EntityFactory:createNukeUpgrade(x, y, radius, color, count)
+    return NukeUpgrade:new(x, y, radius, color, "nukeUpgrade", count)
+end
+
 -- Generalized procedural spawn function
-function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, configNum, spawnParams)
+function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities, entityType, configNum)
     local config
     config = EntityFactory.spawnConfigs[configNum]
     -- Check spawn cooldown
@@ -227,13 +293,13 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
     end
 
     -- Mark current chunk as explored
-    local chunk = self:getCurrentChunk(cameraX, cameraY, config)
+    local chunk = self:getCurrentChunk(cameraX, cameraY)
     self.exploredChunks[chunk.x..","..chunk.y] = true
 
-    -- Try to find valid spawn positionspawnParams.projRadius,
+    -- Try to find valid spawn positionconfig.projRadius,
     for i = 1, config.MAX_ATTEMPTS do
         local angle = math.random() * math.pi * 2
-        local distance = config.RADIUS * (0.8 + math.random() * 0.4)
+        local distance = config.GEN_RADIUS * (0.8 + math.random() * 0.4)
         local x = cameraX + math.cos(angle) * distance
         local y = cameraY + math.sin(angle) * distance
 
@@ -242,24 +308,26 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
             
             -- Create the appropriate entity type
             if entityType == "mouth" then
-                return self:createMouth(x, y, spawnParams.radius, spawnParams.color)
+                return self:createMouth(x, y, config.radius, config.color)
             elseif entityType == "butt" then
-                local turret1 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
+                local turret1 = self:createTurret(x, y, config.radius, config.color, entityType, config.direction, config.rotationSpeed, config.shotSpeed, config.fireRate, config.projRadius,config.projLifespan)
             
-                local turret2 = self:createTurret(x, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
+                local turret2 = self:createTurret(x, y, config.radius, config.color, entityType, (config.direction + math.pi), config.rotationSpeed, config.shotSpeed, config.fireRate, config.projRadius,config.projLifespan)
                 turret2.direction = math.pi
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "nose" then
-                local turret1 = self:createTurret(x-20, y, spawnParams.radius, spawnParams.color, entityType, spawnParams.direction, spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
+                local turret1 = self:createTurret(x-20, y, config.radius, config.color, entityType, config.direction, config.rotationSpeed, config.shotSpeed, config.fireRate, config.projRadius,config.projLifespan)
 
             
-                local turret2 = self:createTurret(x+20, y, spawnParams.radius, spawnParams.color, entityType, (spawnParams.direction + math.pi), spawnParams.rotationSpeed, spawnParams.shotSpeed, spawnParams.fireRate, spawnParams.projRadius,spawnParams.projLifespan)
+                local turret2 = self:createTurret(x+20, y, config.radius, config.color, entityType, (config.direction + math.pi), config.rotationSpeed, config.shotSpeed, config.fireRate, config.projRadius,config.projLifespan)
 
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "healingUpgrade" then
-                return self:createHealingUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
+                return self:createHealingUpgrade(x, y, config.radius, config.color, config.health)
             elseif entityType == "duplicationUpgrade" then
-                return self:createDuplicationUpgrade(x, y, spawnParams.radius, spawnParams.color, spawnParams.health)
+                return self:createDuplicationUpgrade(x, y, config.radius, config.color, config.health)
+            elseif entityType == "nukeUpgrade" then
+                return self:createNukeUpgrade(x, y, config.radius, config.color, config.health)
             -- Add more entity types as needed
             end
         end
@@ -332,8 +400,8 @@ function EntityFactory:createRandomGridProjectile(radius, screenWidth, screenHei
 end
 
 -- Keep these helper functions
-function EntityFactory:getCurrentChunk(x, y, config)
-    local gs = config.GRID_SIZE
+function EntityFactory:getCurrentChunk(x, y)
+    local gs = GRID_SIZE
     return {
         x = math.floor(x / gs),
         y = math.floor(y / gs)
