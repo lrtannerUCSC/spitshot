@@ -71,7 +71,9 @@ local healingUpgradeConfig1 = {
     -- Entity Gen
     radius = 20,
     color = {0.2, 0.8, 0.4},
-    type = "healingUpgrade",
+    type = "upgrade",
+    subtype = "healing",
+    cost = 0,
     health = 1,
 
     -- Proc Gen
@@ -86,7 +88,9 @@ local duplicationUpgradeConfig1 = {
     -- Entity Gen
     radius = 20,
     color = {1, 1, 1},
-    type = "duplicationUpgrade",
+    type = "upgrade",
+    subtype = "duplication",
+    cost = 200,
     count = 1,
 
     -- Proc Gen
@@ -101,7 +105,9 @@ local nukeUpgradeConfig1 = {
     -- Entity Gen
     radius = 20,
     color = {1, 1, 1},
-    type = "nukeUpgrade",
+    type = "upgrade",
+    subtype = "nuke",
+    cost = 50,
     count = 1,
 
     -- Proc Gen
@@ -271,16 +277,16 @@ function EntityFactory:createTwinTurrets(x, y, radius, color, type, direction, r
     return {turret1, turret2}  -- Return both turrets as a pair
 end
 
-function EntityFactory:createHealingUpgrade(x, y, radius, color, health)
-    return HealingUpgrade:new(x, y, radius, color, "healingUpgrade", health)
+function EntityFactory:createHealingUpgrade(x, y, radius, color, type, subtype, cost, health)
+    return HealingUpgrade:new(x, y, radius, color, type, subtype, cost, health)
 end
 
-function EntityFactory:createDuplicationUpgrade(x, y, radius, color, count)
-    return DuplicationUpgrade:new(x, y, radius, color, "duplicationUpgrade", count)
+function EntityFactory:createDuplicationUpgrade(x, y, radius, color, type, subtype, cost, count)
+    return DuplicationUpgrade:new(x, y, radius, color, type, subtype, cost, count)
 end
 
-function EntityFactory:createNukeUpgrade(x, y, radius, color, count)
-    return NukeUpgrade:new(x, y, radius, color, "nukeUpgrade", count)
+function EntityFactory:createNukeUpgrade(x, y, radius, color, type, subtype, cost, count)
+    return NukeUpgrade:new(x, y, radius, color, type, subtype, cost, count)
 end
 
 -- Generalized procedural spawn function
@@ -323,11 +329,11 @@ function EntityFactory:attemptProceduralSpawn(cameraX, cameraY, existingEntities
 
                 return {turret1, turret2}  -- Return both turrets as a pairs
             elseif entityType == "healingUpgrade" then
-                return self:createHealingUpgrade(x, y, config.radius, config.color, config.health)
+                return self:createHealingUpgrade(x, y, config.radius, config.color, config.type, config.subtype, config.cost, config.health)
             elseif entityType == "duplicationUpgrade" then
-                return self:createDuplicationUpgrade(x, y, config.radius, config.color, config.health)
+                return self:createDuplicationUpgrade(x, y, config.radius, config.color, config.type, config.subtype, config.cost, config.count)
             elseif entityType == "nukeUpgrade" then
-                return self:createNukeUpgrade(x, y, config.radius, config.color, config.health)
+                return self:createNukeUpgrade(x, y, config.radius, config.color, config.type, config.subtype, config.cost, config.count)
             -- Add more entity types as needed
             end
         end

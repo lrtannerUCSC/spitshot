@@ -48,7 +48,7 @@ function Gumball:new(x, y, radius, speed, color, type)
 
     -- Score properties
     instance.visitedMouths = {}
-    instance.points = 1000
+    instance.points = 0
     instance.pointMult = 1
    
     -- I-frames
@@ -192,31 +192,34 @@ function Gumball:onCollision(other, entities)
             end
         end
     end
-    if other.type == "healingUpgrade" then
-        self.health = self.health + 1
-        other.active = false
-    end
-    if other.type == "duplicationUpgrade" then
-        other.active = false
-        if self.duplicationTimer <= 0 then
-            self.duplicationTimer = self.duplicationCooldown
-            local gumballJr = Gumball:new(self.x, self.y, self.radius, self.baseSpeed, self.color, self.type)
-            table.insert(entities, gumballJr)
+    if other.type == "upgrade" and self.points >= other.cost then
+        self.points = self.points - other.cost
+        if other.subtype == "healing" then
+            self.health = self.health + 1
+            other.active = false
         end
-    end
-    if other.type == "nukeUpgrade" then
-        local pointTracker = 0
-        for _, entity in ipairs(entities) do
-            if entity.type == "projectile" then
-                pointTracker = pointTracker + 1
-                if pointTracker >= 5 then
-                    pointTracker = 0
-                    self.points = self.points + 1
-                end
-                entity.active = false
+        if other.subtype == "duplication" then
+            other.active = false
+            if self.duplicationTimer <= 0 then
+                self.duplicationTimer = self.duplicationCooldown
+                local gumballJr = Gumball:new(self.x, self.y, self.radius, self.baseSpeed, self.color, self.type)
+                table.insert(entities, gumballJr)
             end
         end
-        other.active = false
+        if other.subtype == "nuke" then
+            local pointTracker = 0
+            for _, entity in ipairs(entities) do
+                if entity.type == "projectile" then
+                    pointTracker = pointTracker + 1
+                    if pointTracker >= 5 then
+                        pointTracker = 0
+                        self.points = self.points + 1
+                    end
+                    entity.active = false
+                end
+            end
+            other.active = false
+        end
     end
 end
 
