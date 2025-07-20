@@ -35,7 +35,7 @@ local buttConfig1 = {
     direction = 0,
     rotationSpeed = 60,
     shotSpeed = 30,
-    fireRate = 1,
+    fireRate = 1.5,
     projRadius = 5,
     projLifespan = 15,
 
@@ -55,7 +55,7 @@ local noseConfig1 = {
     direction = 0,
     rotationSpeed = 90,
     shotSpeed = 20,
-    fireRate = .75,
+    fireRate = 1.25,
     projRadius = 7.5,
     projLifespan = 15,
 
